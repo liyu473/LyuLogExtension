@@ -1,7 +1,6 @@
 # LogExtension
 
 [![NuGet](https://img.shields.io/nuget/v/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
 [![GitHub](https://img.shields.io/github/license/liyu473/LyuLogExtension)](https://github.com/liyu473/LyuLogExtension)
 
 基于 ZLogger 高性能的日志简易扩展库，内置简单配置的日志记录功能，支持工厂模式和依赖注入两种使用方式。
