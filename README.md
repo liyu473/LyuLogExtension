@@ -1,6 +1,11 @@
 # LogExtension
 
-基于 ZLogger 的日志扩展库，提供简单易用的日志记录功能，支持工厂模式和依赖注入两种使用方式。
+[![NuGet](https://img.shields.io/nuget/v/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
+[![GitHub](https://img.shields.io/github/license/liyu473/LyuLogExtension)](https://github.com/liyu473/LyuLogExtension)
+
+基于 ZLogger 高性能的日志简易扩展库，内置简单配置的日志记录功能，支持工厂模式和依赖注入两种使用方式。
+
 
 ## 特性
 
@@ -13,11 +18,8 @@
 
 ## 依赖项
 
-本库依赖以下 NuGet 包（会自动安装）：
-
-```xml
-<PackageReference Include="ZLogger" Version="2.5.10" />
-```
+依赖Zlogger
+感谢Zlogger研发团队 ： https://github.com/Cysharp/ZLogger
 
 ## 使用方式
 
@@ -183,14 +185,9 @@ public class WeatherController : ControllerBase
 | Error     | 错误信息                 | `logs/`         |
 | Critical  | 严重错误                 | `logs/`         |
 
-## 最佳实践
 
-### 1. 选择合适的使用方式
 
-- **工厂模式**：适用于控制台应用、类库、不使用 DI 的项目
-- **依赖注入**：适用于 ASP.NET Core、Worker Service、使用 DI 的项目
-
-### 2. 使用结构化日志
+### 使用结构化日志
 
 ```csharp
 // 推荐：使用占位符
@@ -200,25 +197,3 @@ logger.LogInformation("用户 {UserId} 下载了文件 {FileName}，大小: {Fil
 // 不推荐：字符串拼接
 logger.LogInformation($"用户 {userId} 下载了文件 {fileName}，大小: {fileSize} bytes");
 ```
-
-### 3. 记录异常信息
-
-```csharp
-try
-{
-    // 业务逻辑
-}
-catch (Exception ex)
-{
-    // 将异常对象传递给日志方法
-    logger.LogError(ex, "处理请求失败，用户: {UserId}", userId);
-    throw;
-}
-```
-
-## 多框架支持
-
-本库支持以下目标框架：
-
-- ✅ .NET 8.0
-- ✅ .NET 9.0
