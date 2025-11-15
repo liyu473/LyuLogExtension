@@ -29,6 +29,7 @@ public static class ZlogFactory
         // 创建 Trace/Debug 日志工厂
         var traceFactory = LoggerFactory.Create(logging =>
         {
+            logging.ClearProviders();
             logging.SetMinimumLevel(LogLevel.Trace);
             logging.AddZLoggerRollingFile(options =>
             {
