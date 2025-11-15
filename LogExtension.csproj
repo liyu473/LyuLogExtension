@@ -1,13 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-	<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 
-  <ItemGroup>
-    <PackageReference Include="ZLogger" Version="2.5.10" />
-  </ItemGroup>
+		<!-- NuGet 包信息 -->
+		<PackageId>LyuLogExtension</PackageId>
+		<Version>1.0.1</Version>
+		<Authors>Liyu</Authors>
+		<Description>基于Zlogger高性能日志的简易拓展，内置默认配置可以简化配置</Description>
+		<PackageTags>Zlogger;Ilogger;logger;log</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+		<!-- 打包时自动生成 nupkg -->
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ZLogger" Version="2.5.10" />
+		<Content Include="README.md" Pack="true" PackagePath=""/>
+	</ItemGroup>
 
 </Project>
