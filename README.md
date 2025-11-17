@@ -14,6 +14,7 @@
 - 🧵 **线程安全**：支持多线程并发日志记录
 - 📍 **调用位置追踪**：自动记录类名和行号
 - ⚡ **高性能**：基于 ZLogger 的高性能日志框架
+- ⚙️ **灵活配置**：支持 appsettings.json 或代码配置，可自定义日志级别和过滤规则
 
 ## 依赖项
 
@@ -148,6 +149,100 @@ public class WeatherController : ControllerBase
 }
 ```
 
+## 配置方式
+
+### 方式一：通过 appsettings.json 配置（推荐）
+
+这是最简单的配置方式，支持热重载，修改配置文件后自动生效。
+
+#### 1. 在 Program.cs 中注册服务
+```csharp
+builder.Services.AddZLogger();
+```
+
+#### 2. 在项目根目录创建或修改 appsettings.json
+```json
+{
+  "ZLogger": {
+    "LogLevel": {
+      "Default": "Information",
+      "System.Net.Http.HttpClient": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning",
+      "Microsoft.AspNetCore": "Warning"
+      //或者其他
+    }
+  }
+}
+```
+
+**配置说明：**
+- `Default`: 默认日志级别
+- `System.Net.Http.HttpClient`: 屏蔽 HttpClient 的 Information 级别日志
+- `Microsoft.EntityFrameworkCore.Database.Command`: 屏蔽 EF Core SQL 命令日志
+- `Microsoft.AspNetCore`: 屏蔽 ASP.NET Core 框架日志
+
+### 方式二：通过代码配置
+
+#### 使用 Action 配置
+```csharp
+builder.Services.AddZLogger(config =>
+{
+    // 设置默认最低日志级别
+    config.MinimumLevel = LogLevel.Information;
+    
+    // 添加类别过滤器（屏蔽 HttpClient 日志）
+    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
+    config.CategoryFilters["Microsoft.EntityFrameworkCore"] = LogLevel.Warning;
+    
+    // 如果不想从 appsettings.json 读取配置，可设置为 false
+    config.UseConfigurationFile = false;
+});
+```
+
+#### 使用配置对象
+```csharp
+var logConfig = new ZLoggerConfig
+{
+    MinimumLevel = LogLevel.Information,
+    CategoryFilters = new Dictionary<string, LogLevel>
+    {
+        ["System.Net.Http.HttpClient"] = LogLevel.Warning,
+        ["Microsoft.EntityFrameworkCore"] = LogLevel.Warning
+    },
+    UseConfigurationFile = false
+};
+
+builder.Services.AddZLogger(logConfig);
+```
+
+### 方式三：全局配置（工厂模式）
+
+在应用启动时配置全局日志设置：
+
+```csharp
+// 使用 Action 配置
+ZlogFactory.ConfigureDefaults(config =>
+{
+    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
+    config.UseConfigurationFile = true;
+});
+
+// 然后正常使用
+var logger = ZlogFactory.Get<MyClass>();
+logger.LogInformation("这是一条日志");
+```
+
+### 常见日志类别名称
+
+| 类别名称 | 说明 |
+|---------|------|
+| `System.Net.Http.HttpClient` | HttpClient 的所有日志 |
+| `System.Net.Http.HttpClient.{name}` | 指定名称的 HttpClient |
+| `Microsoft.EntityFrameworkCore` | EF Core 所有日志 |
+| `Microsoft.EntityFrameworkCore.Database.Command` | EF Core SQL 命令日志 |
+| `Microsoft.AspNetCore` | ASP.NET Core 框架日志 |
+| `Microsoft.Hosting.Lifetime` | 应用程序生命周期日志 |
+
 ## 日志输出
 
 ### 默认配置
@@ -173,19 +268,6 @@ public class WeatherController : ControllerBase
 - 日志消息
 - 异常信息（如果有）
 
-## 日志级别
-
-| 级别        | 说明                   | 输出位置            |
-|-----------|----------------------|-----------------|
-| Trace     | 最详细的跟踪信息             | `logs/trace/`   |
-| Debug     | 调试信息                 | `logs/trace/`   |
-| Information | 一般信息性消息            | `logs/`         |
-| Warning   | 警告信息                 | `logs/`         |
-| Error     | 错误信息                 | `logs/`         |
-| Critical  | 严重错误                 | `logs/`         |
-
-
-
 ### 使用结构化日志
 
 ```csharp
@@ -196,3 +278,30 @@ logger.LogInformation("用户 {UserId} 下载了文件 {FileName}，大小: {Fil
 // 不推荐：字符串拼接
 logger.LogInformation($"用户 {userId} 下载了文件 {fileName}，大小: {fileSize} bytes");
 ```
+
+### 如何完全禁用某个类别的日志？
+
+设置日志级别为 `None`：
+```json
+{
+  "ZLogger": {
+    "LogLevel": {
+      "System.Net.Http.HttpClient": "None"
+    }
+  }
+}
+```
+
+或者通过代码：
+```csharp
+config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.None;
+```
+
+## License
+
+MIT License
+
+## 相关链接
+
+- [ZLogger 官方文档](https://github.com/Cysharp/ZLogger)
+- [Microsoft.Extensions.Logging 文档](https://docs.microsoft.com/aspnet/core/fundamentals/logging)

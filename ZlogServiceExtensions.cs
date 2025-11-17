@@ -35,4 +35,37 @@ public static class ZlogServiceExtensions
         
         return services;
     }
+
+    /// <summary>
+    /// 添加 ZLogger 日志服务，使用 Action 配置
+    /// </summary>
+    public static IServiceCollection AddZLogger(
+        this IServiceCollection services,
+        Action<ZLoggerConfig> configure)
+    {
+        var config = new ZLoggerConfig();
+        configure(config);
+        
+        var factory = ZlogFactory.CreateFactoryWithConfig(config);
+        ZlogFactory.SetFactory(factory);
+        services.AddSingleton(factory);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        
+        return services;
+    }
+
+    /// <summary>
+    /// 添加 ZLogger 日志服务，使用配置对象
+    /// </summary>
+    public static IServiceCollection AddZLogger(
+        this IServiceCollection services,
+        ZLoggerConfig config)
+    {
+        var factory = ZlogFactory.CreateFactoryWithConfig(config);
+        ZlogFactory.SetFactory(factory);
+        services.AddSingleton(factory);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        
+        return services;
+    }
 }

@@ -7,7 +7,7 @@
 
 		<!-- NuGet 包信息 -->
 		<PackageId>LyuLogExtension</PackageId>
-		<Version>1.0.4</Version>
+		<Version>1.1.0</Version>
 		<Authors>Liyu</Authors>
 		<Description>基于Zlogger高性能日志的简易拓展，内置默认配置可以简化配置</Description>
 		<PackageTags>Zlogger;Ilogger;logger;log</PackageTags>
@@ -25,6 +25,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="ZLogger" Version="2.5.10" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
 		<Content Include="README.md" Pack="true" PackagePath=""/>
 	</ItemGroup>
 

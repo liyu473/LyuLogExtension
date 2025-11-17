@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
 using Utf8StringInterpolation;
 using ZLogger;
 using ZLogger.Providers;
@@ -8,6 +10,7 @@ namespace LogExtension;
 public static class ZlogFactory
 {
     private static ILoggerFactory? _customFactory;
+    private static ZLoggerConfig _defaultConfig = new();
 
     private static readonly Lazy<ILoggerFactory> _defaultFactory = new(
         CreateDefaultFactory,
@@ -20,17 +23,45 @@ public static class ZlogFactory
     public static void SetFactory(ILoggerFactory factory) => _customFactory = factory;
 
     /// <summary>
+    /// 设置默认配置（全局生效）
+    /// </summary>
+    public static void SetDefaultConfig(ZLoggerConfig config) => _defaultConfig = config;
+
+    /// <summary>
+    /// 设置默认配置（通过 Action 配置）
+    /// </summary>
+    public static void ConfigureDefaults(Action<ZLoggerConfig> configure)
+    {
+        _defaultConfig = new ZLoggerConfig();
+        configure(_defaultConfig);
+    }
+
+    /// <summary>
     /// 默认 Factory（可被覆盖），支持线程安全的懒加载
     /// </summary>
     public static ILoggerFactory Factory => _customFactory ?? _defaultFactory.Value;
 
     private static ILoggerFactory CreateDefaultFactory()
     {
+        return CreateFactoryWithConfig(_defaultConfig);
+    }
+
+    /// <summary>
+    /// 使用指定配置创建 LoggerFactory
+    /// </summary>
+    public static ILoggerFactory CreateFactoryWithConfig(ZLoggerConfig config)
+    {
         // 创建 Trace/Debug 日志工厂
         var traceFactory = LoggerFactory.Create(logging =>
         {
             logging.ClearProviders();
-            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.SetMinimumLevel(config.TraceMinimumLevel);
+
+            // 从配置文件加载配置（如果启用）
+            if (config.UseConfigurationFile)
+            {
+                ApplyConfigurationFile(logging, config.ConfigurationFilePath);
+            }
             logging.AddZLoggerRollingFile(options =>
             {
                 options.FilePathSelector = (timestamp, sequenceNumber) =>
@@ -41,6 +72,10 @@ public static class ZlogFactory
                 ConfigureFormatter(options);
                 ConfigureOptions(options);
             });
+
+            // 应用自定义过滤器
+            ApplyFilters(logging, config.CategoryFilters);
+
             // 只记录 Trace 和 Debug
             logging.AddFilter((category, level) => level < LogLevel.Information);
         });
@@ -48,7 +83,14 @@ public static class ZlogFactory
         // 创建 Info 及以上日志工厂
         var infoFactory = LoggerFactory.Create(logging =>
         {
-            logging.SetMinimumLevel(LogLevel.Information);
+            logging.ClearProviders();
+            logging.SetMinimumLevel(config.MinimumLevel);
+
+            // 从配置文件加载配置（如果启用）
+            if (config.UseConfigurationFile)
+            {
+                ApplyConfigurationFile(logging, config.ConfigurationFilePath);
+            }
             logging.AddZLoggerRollingFile(options =>
             {
                 options.FilePathSelector = (timestamp, sequenceNumber) =>
@@ -59,6 +101,9 @@ public static class ZlogFactory
                 ConfigureFormatter(options);
                 ConfigureOptions(options);
             });
+
+            // 应用自定义过滤器
+            ApplyFilters(logging, config.CategoryFilters);
         });
 
         // 返回组合工厂
@@ -99,6 +144,42 @@ public static class ZlogFactory
         // 启用调用者信息捕获
         options.IncludeScopes = true; // 启用作用域支持
         options.CaptureThreadInfo = true; // 捕获线程信息
+    }
+
+    /// <summary>
+    /// 应用配置文件（appsettings.json）
+    /// </summary>
+    private static void ApplyConfigurationFile(ILoggingBuilder logging, string? configFilePath)
+    {
+        try
+        {
+            var basePath = configFilePath ?? Directory.GetCurrentDirectory();
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(basePath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            var loggingSection = configuration.GetSection("ZLogger");
+            if (loggingSection.Exists())
+            {
+                logging.AddConfiguration(loggingSection);
+            }
+        }
+        catch
+        {
+            // 如果配置文件不存在或读取失败，静默失败
+        }
+    }
+
+    /// <summary>
+    /// 应用自定义过滤器
+    /// </summary>
+    private static void ApplyFilters(ILoggingBuilder logging, Dictionary<string, LogLevel> filters)
+    {
+        foreach (var filter in filters)
+        {
+            logging.AddFilter(filter.Key, filter.Value);
+        }
     }
 
     public static ILogger<T> Get<T>() => Factory.CreateLogger<T>();
