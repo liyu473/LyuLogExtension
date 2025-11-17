@@ -46,4 +46,10 @@ public class ZLoggerConfig
     /// 可选配置，不设置则使用默认值
     /// </summary>
     public int? RollingSizeKB { get; set; }
+
+    /// <summary>
+    /// 额外的日志配置（例如：添加控制台、Debug 输出等）
+    /// 会在创建日志工厂时调用，允许用户自定义其他日志提供程序
+    /// </summary>
+    public Action<ILoggingBuilder>? AdditionalConfiguration { get; set; }
 }

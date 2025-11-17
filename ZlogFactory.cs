@@ -69,6 +69,9 @@ public static class ZlogFactory
                 ConfigureOptions(options);
             });
 
+            // 应用额外配置（如控制台输出等）
+            config.AdditionalConfiguration?.Invoke(logging);
+
             // 应用自定义过滤器
             ApplyFilters(logging, config.CategoryFilters);
 
@@ -93,6 +96,9 @@ public static class ZlogFactory
                 ConfigureFormatter(options);
                 ConfigureOptions(options);
             });
+
+            // 应用额外配置（如控制台输出等）
+            config.AdditionalConfiguration?.Invoke(logging);
 
             ApplyFilters(logging, config.CategoryFilters);
         });
@@ -128,6 +134,33 @@ public static class ZlogFactory
                 config.TraceMinimumLevel = parsedTraceLevel;
             }
             
+            // 读取文件路径配置
+            var traceLogPath = configSection["TraceLogPath"];
+            if (!string.IsNullOrWhiteSpace(traceLogPath))
+            {
+                config.TraceLogPath = traceLogPath;
+            }
+            
+            var infoLogPath = configSection["InfoLogPath"];
+            if (!string.IsNullOrWhiteSpace(infoLogPath))
+            {
+                config.InfoLogPath = infoLogPath;
+            }
+            
+            // 读取滚动间隔配置
+            var rollingInterval = configSection["RollingInterval"];
+            if (Enum.TryParse<RollingInterval>(rollingInterval, out var parsedInterval))
+            {
+                config.RollingInterval = parsedInterval;
+            }
+            
+            // 读取文件大小配置
+            var rollingSizeKB = configSection["RollingSizeKB"];
+            if (int.TryParse(rollingSizeKB, out var parsedSize))
+            {
+                config.RollingSizeKB = parsedSize;
+            }
+            
             // 读取类别过滤器
             var logLevelSection = configSection.GetSection("LogLevel");
             if (logLevelSection.Exists())
@@ -142,64 +175,8 @@ public static class ZlogFactory
             }
         }
         
-        // 创建 Trace/Debug 日志工厂
-        var traceFactory = LoggerFactory.Create(logging =>
-        {
-            logging.ClearProviders();
-            logging.SetMinimumLevel(config.TraceMinimumLevel);
-            
-            // 从配置中应用日志级别配置
-            if (configSection.Exists())
-            {
-                logging.AddConfiguration(configSection);
-            }
-            
-            logging.AddZLoggerRollingFile(options =>
-            {
-                options.FilePathSelector = (timestamp, sequenceNumber) =>
-                    $"logs/trace/{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
-                options.RollingInterval = RollingInterval.Hour;
-                options.RollingSizeKB = 1024 * 2;
-
-                ConfigureFormatter(options);
-                ConfigureOptions(options);
-            });
-
-            // 应用自定义过滤器
-            ApplyFilters(logging, config.CategoryFilters);
-
-            // 只记录 Trace 和 Debug
-            logging.AddFilter((category, level) => level < LogLevel.Information);
-        });
-
-        // 创建 Info 及以上日志工厂
-        var infoFactory = LoggerFactory.Create(logging =>
-        {
-            logging.ClearProviders();
-            logging.SetMinimumLevel(config.MinimumLevel);
-
-            // 从配置中应用日志级别配置
-            if (configSection.Exists())
-            {
-                logging.AddConfiguration(configSection);
-            }
-            
-            logging.AddZLoggerRollingFile(options =>
-            {
-                options.FilePathSelector = (timestamp, sequenceNumber) =>
-                    $"logs/{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
-                options.RollingInterval = RollingInterval.Hour;
-                options.RollingSizeKB = 1024 * 2;
-
-                ConfigureFormatter(options);
-                ConfigureOptions(options);
-            });
-
-            ApplyFilters(logging, config.CategoryFilters);
-        });
-
-        // 返回组合工厂
-        return new CompositeLoggerFactory(traceFactory, infoFactory);
+        // 使用读取到的配置创建工厂
+        return CreateFactoryWithConfig(config);
     }
 
     private static void ConfigureFormatter(ZLoggerRollingFileOptions options)

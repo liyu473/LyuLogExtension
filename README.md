@@ -12,11 +12,13 @@
 
 - 🚀 **双模式支持**：支持工厂模式和依赖注入两种使用方式
 - 📝 **自动日志分级**：Trace/Debug 和 Info 及以上级别分别输出到不同文件
-- 🔄 **滚动日志**：按小时自动滚动，单文件最大 2MB
+- 🔄 **滚动日志**：按小时自动滚动（可配置），单文件最大 2MB（可配置）
 - 🧵 **线程安全**：支持多线程并发日志记录
-- 📍 **调用位置追踪**：自动记录类名和行号
+- 📍 **调用位置追踪**：自动记录类名和行号（使用 ZLog* 方法）
 - ⚡ **高性能**：基于 ZLogger 的高性能日志框架
 - ⚙️ **灵活配置**：支持 appsettings.json 或代码配置，可自定义日志级别和过滤规则
+- 🖥️ **多输出支持**：支持文件、控制台、Debug 等多种日志输出方式
+- 🎯 **优雅的 API**：类似 Serilog 的配置方式，简洁易用
 
 ## 依赖项
 
@@ -43,13 +45,17 @@ return Host.CreateDefaultBuilder(args)
     });
 ```
 
-**appsettings.json 配置示例：**
+**appsettings.json 完整配置示例：**
 
 ```json
 {
   "ZLogger": {
     "MinimumLevel": "Information",
     "TraceMinimumLevel": "Trace",
+    "InfoLogPath": "D:/MyApp/logs/",
+    "TraceLogPath": "D:/MyApp/logs/debug/",
+    "RollingInterval": "Day",
+    "RollingSizeKB": 10240,
     "LogLevel": {
       "Default": "Information",
       "System.Net.Http.HttpClient": "Warning",
@@ -60,26 +66,56 @@ return Host.CreateDefaultBuilder(args)
 }
 ```
 
+**配置项说明：**
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|-------|------|--------|------|
+| `MinimumLevel` | `string` | `Information` | Info 日志最低级别 |
+| `TraceMinimumLevel` | `string` | `Trace` | Trace 日志最低级别 |
+| `InfoLogPath` | `string` | `logs/` | Info 日志路径（可选） |
+| `TraceLogPath` | `string` | `logs/trace/` | Trace 日志路径（可选） |
+| `RollingInterval` | `string` | `Hour` | 滚动间隔：`Hour`/`Day`/`Month`/`Year`（可选） |
+| `RollingSizeKB` | `int` | `2048` | 单文件大小（KB）（可选） |
+| `LogLevel` | `object` | - | 类别过滤器 |
+
 ### 方式二：代码配置（无需配置文件）
 
-如果不想使用配置文件，直接在代码中配置：
+#### 基础配置（仅文件日志）
 
 ```csharp
 services.AddZLogger(config =>
 {
-    // 日志级别配置（可选，有默认值）
-    // config.MinimumLevel = LogLevel.Information;        // logs/ 文件夹接受的最低日志级别（默认：Information）
-    // config.TraceMinimumLevel = LogLevel.Trace;         // logs/trace/ 文件夹接受的最低日志级别（默认：Trace）
-    
     // 类别过滤器（推荐配置，屏蔽框架日志）
     config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
     config.CategoryFilters["Microsoft.Extensions.Http"] = LogLevel.Warning;
+});
+```
+
+
+
+#### 完整自定义配置
+
+```csharp
+services.AddZLogger(logging =>
+{
+    // 额外的日志提供程序
+    logging.AddZLoggerConsole();
+    logging.AddDebug();
+}, config =>
+{
+    // 日志级别配置（可选，有默认值）
+    config.MinimumLevel = LogLevel.Information;        // logs/ 文件夹接受的最低日志级别（默认：Information）
+    config.TraceMinimumLevel = LogLevel.Trace;         // logs/trace/ 文件夹接受的最低日志级别（默认：Trace）
     
-    // 高级配置（以下默认的）
-    // config.InfoLogPath = "logs/";                      // Info 日志路径（默认：logs/）
-    // config.TraceLogPath = "logs/trace/";               // Trace 日志路径（默认：logs/trace/）
-    // config.RollingInterval = RollingInterval.Hour;     // 滚动间隔（默认：每小时）
-    // config.RollingSizeKB = 2048;                       // 单文件大小KB（默认：2048 = 2MB）
+    // 类别过滤器
+    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
+    config.CategoryFilters["Microsoft.Extensions.Http"] = LogLevel.Warning;
+    
+    // 高级配置（可选）
+    config.InfoLogPath = "D:/MyApp/logs/";             // Info 日志路径（默认：logs/）
+    config.TraceLogPath = "D:/MyApp/logs/debug/";      // Trace 日志路径（默认：logs/trace/）
+    config.RollingInterval = RollingInterval.Day;      // 滚动间隔（默认：每小时）
+    config.RollingSizeKB = 10240;                      // 单文件大小KB（默认：2048 = 2MB）
 });
 ```
 
@@ -91,11 +127,9 @@ services.AddZLogger(config =>
 | `TraceMinimumLevel` | `Trace` | logs/trace/ 文件夹记录的最低日志级别 |
 | `CategoryFilters` | 空 | 类别过滤器，用于屏蔽特定命名空间的日志 |
 | `InfoLogPath` | `logs/` | Info 及以上日志的输出路径 |
-| `TraceLogPath` | `logs/trace/` | Trace/Debug    Info以下日志的输出路径 |
+| `TraceLogPath` | `logs/trace/` | Trace/Debug 日志的输出路径 |
 | `RollingInterval` | `Hour` | 日志文件滚动间隔（Hour/Day/Month等） |
 | `RollingSizeKB` | `2048` | 单个日志文件最大大小（KB） |
-
-> **建议**：大多数情况下只需要配置 `CategoryFilters` 来屏蔽框架日志，其他保持默认即可。
 
 ## 使用方式（前提是配置好了）
 
