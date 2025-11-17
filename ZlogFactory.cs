@@ -112,9 +112,11 @@ public static class ZlogFactory
     /// </summary>
     /// <param name="configuration">配置对象</param>
     /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
+    /// <param name="configureLogging">可选的额外日志配置（如控制台输出等）</param>
     public static ILoggerFactory CreateFactoryFromConfiguration(
         IConfiguration configuration, 
-        string configSectionName = "ZLogger")
+        string configSectionName = "ZLogger",
+        Action<ILoggingBuilder>? configureLogging = null)
     {
         var config = new ZLoggerConfig();
         var configSection = configuration.GetSection(configSectionName);
@@ -174,6 +176,9 @@ public static class ZlogFactory
                 }
             }
         }
+        
+        // 设置额外的日志配置
+        config.AdditionalConfiguration = configureLogging;
         
         // 使用读取到的配置创建工厂
         return CreateFactoryWithConfig(config);

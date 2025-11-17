@@ -29,6 +29,17 @@
 
 ### 方式一：从配置文件读取（推荐）
 
+#### 配置文件 + 控制台输出（开发环境推荐）
+
+```csharp
+services.AddZLogger(context.Configuration, logging =>
+{
+    // logging.AddZLoggerConsole();  // 添加控制台输出
+});
+```
+
+#### 完整示例
+
 ```csharp
 return Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
@@ -39,7 +50,20 @@ return Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddZLogger(context.Configuration);
+        // 根据环境选择配置
+        if (context.HostingEnvironment.IsDevelopment())
+        {
+            // 开发环境：配置文件 + 控制台
+            services.AddZLogger(context.Configuration, logging =>
+            {
+                logging.AddZLoggerConsole();
+            });
+        }
+        else
+        {
+            // 生产环境：仅配置文件
+            services.AddZLogger(context.Configuration);
+        }
         
         // 其他服务注册...
     });
