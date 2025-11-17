@@ -57,7 +57,6 @@ public static class ZlogFactory
             logging.ClearProviders();
             logging.SetMinimumLevel(config.TraceMinimumLevel);
 
-            // 从配置文件加载配置（如果启用）
             if (config.UseConfigurationFile)
             {
                 ApplyConfigurationFile(logging, config.ConfigurationFilePath);
@@ -102,7 +101,6 @@ public static class ZlogFactory
                 ConfigureOptions(options);
             });
 
-            // 应用自定义过滤器
             ApplyFilters(logging, config.CategoryFilters);
         });
 
