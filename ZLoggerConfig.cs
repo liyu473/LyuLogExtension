@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ZLogger.Providers;
 
 namespace LogExtension;
 
@@ -23,12 +24,26 @@ public class ZLoggerConfig
     public LogLevel TraceMinimumLevel { get; set; } = LogLevel.Trace;
 
     /// <summary>
-    /// 是否启用从 appsettings.json 读取配置
+    /// Trace/Debug 日志文件路径（默认：logs/trace/）
+    /// 可选配置，不设置则使用默认值
     /// </summary>
-    public bool UseConfigurationFile { get; set; } = true;
+    public string? TraceLogPath { get; set; }
 
     /// <summary>
-    /// appsettings.json 文件路径（默认为当前目录）
+    /// Info 及以上日志文件路径（默认：logs/）
+    /// 可选配置，不设置则使用默认值
     /// </summary>
-    public string? ConfigurationFilePath { get; set; }
+    public string? InfoLogPath { get; set; }
+
+    /// <summary>
+    /// 日志滚动间隔（默认：每小时）
+    /// 可选配置，不设置则使用默认值
+    /// </summary>
+    public RollingInterval? RollingInterval { get; set; }
+
+    /// <summary>
+    /// 单个日志文件最大大小（KB）（默认：2048KB = 2MB）
+    /// 可选配置，不设置则使用默认值
+    /// </summary>
+    public int? RollingSizeKB { get; set; }
 }

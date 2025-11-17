@@ -1,9 +1,11 @@
-# LogExtension
+# LyuLogExtension
 
 [![NuGet](https://img.shields.io/nuget/v/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
 [![GitHub](https://img.shields.io/github/license/liyu473/LyuLogExtension)](https://github.com/liyu473/LyuLogExtension)
 
 基于 ZLogger 高性能的日志简易扩展库，内置简单配置的日志记录功能，支持工厂模式和依赖注入两种使用方式。
+
+因为这是简易的日志拓展，目的是为了简化配置，所以除了过滤器配置外，其余使用默认配置足够了，如果对日志配置需求较特殊，那就失去了此拓展的意义。
 
 
 ## 特性
@@ -21,7 +23,81 @@
 依赖Zlogger
 感谢Zlogger研发团队 ： https://github.com/Cysharp/ZLogger
 
-## 使用方式
+## 快速开始
+
+### 方式一：从配置文件读取（推荐）
+
+```csharp
+return Host.CreateDefaultBuilder(args)
+    .ConfigureAppConfiguration((context, config) =>
+    {
+        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", 
+            optional: true, reloadOnChange: true);
+    })
+    .ConfigureServices((context, services) =>
+    {
+        services.AddZLogger(context.Configuration);
+        
+        // 其他服务注册...
+    });
+```
+
+**appsettings.json 配置示例：**
+
+```json
+{
+  "ZLogger": {
+    "MinimumLevel": "Information",
+    "TraceMinimumLevel": "Trace",
+    "LogLevel": {
+      "Default": "Information",
+      "System.Net.Http.HttpClient": "Warning",
+      "Microsoft.Extensions.Http": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning"
+    }
+  }
+}
+```
+
+### 方式二：代码配置（无需配置文件）
+
+如果不想使用配置文件，直接在代码中配置：
+
+```csharp
+services.AddZLogger(config =>
+{
+    // 日志级别配置（可选，有默认值）
+    // config.MinimumLevel = LogLevel.Information;        // logs/ 文件夹接受的最低日志级别（默认：Information）
+    // config.TraceMinimumLevel = LogLevel.Trace;         // logs/trace/ 文件夹接受的最低日志级别（默认：Trace）
+    
+    // 类别过滤器（推荐配置，屏蔽框架日志）
+    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
+    config.CategoryFilters["Microsoft.Extensions.Http"] = LogLevel.Warning;
+    
+    // 高级配置（以下默认的）
+    // config.InfoLogPath = "logs/";                      // Info 日志路径（默认：logs/）
+    // config.TraceLogPath = "logs/trace/";               // Trace 日志路径（默认：logs/trace/）
+    // config.RollingInterval = RollingInterval.Hour;     // 滚动间隔（默认：每小时）
+    // config.RollingSizeKB = 2048;                       // 单文件大小KB（默认：2048 = 2MB）
+});
+```
+
+### 配置说明
+
+| 配置项 | 默认值 | 说明 |
+|-------|--------|------|
+| `MinimumLevel` | `Information` | logs/ 文件夹记录的最低日志级别 |
+| `TraceMinimumLevel` | `Trace` | logs/trace/ 文件夹记录的最低日志级别 |
+| `CategoryFilters` | 空 | 类别过滤器，用于屏蔽特定命名空间的日志 |
+| `InfoLogPath` | `logs/` | Info 及以上日志的输出路径 |
+| `TraceLogPath` | `logs/trace/` | Trace/Debug    Info以下日志的输出路径 |
+| `RollingInterval` | `Hour` | 日志文件滚动间隔（Hour/Day/Month等） |
+| `RollingSizeKB` | `2048` | 单个日志文件最大大小（KB） |
+
+> **建议**：大多数情况下只需要配置 `CategoryFilters` 来屏蔽框架日志，其他保持默认即可。
+
+## 使用方式（前提是配置好了）
 
 ### 方式一：工厂模式（静态使用）
 
@@ -36,33 +112,8 @@ using LogExtension;
 var logger = ZlogFactory.Get<Program>();
 
 // 记录日志
-logger.LogInformation("应用启动");
-logger.LogDebug("调试信息: {Value}", 42);
-logger.LogWarning("警告信息");
-logger.LogError(exception, "发生错误");
-```
-
-#### 自定义工厂
-
-如果需要自定义日志配置，可以设置自己的 LoggerFactory：
-
-```csharp
-using Microsoft.Extensions.Logging;
-using ZLogger;
-
-// 创建自定义工厂
-var customFactory = LoggerFactory.Create(logging =>
-{
-    logging.SetMinimumLevel(LogLevel.Debug);
-    logging.AddZLoggerConsole();
-    logging.AddZLoggerFile("logs/custom.log");
-});
-
-// 设置全局工厂
-ZlogFactory.SetFactory(customFactory);
-
-// 之后所有通过 ZlogFactory.Get<T>() 获取的 logger 都会使用自定义配置
-var logger = ZlogFactory.Get<MyClass>();
+logger.ZLogInformation("应用启动");
+logger.ZLogDebug($"调试信息: {Value}");
 ```
 
 ### 方式二：依赖注入（DI）
@@ -84,27 +135,6 @@ builder.Services.AddZLogger();
 var app = builder.Build();
 ```
 
-#### 使用自定义配置
-
-```csharp
-using LogExtension;
-using Microsoft.Extensions.Logging;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// 创建自定义工厂
-var customFactory = LoggerFactory.Create(logging =>
-{
-    logging.SetMinimumLevel(LogLevel.Information);
-    logging.AddZLoggerConsole();
-});
-
-// 使用自定义工厂注册
-builder.Services.AddZLogger(customFactory);
-
-var app = builder.Build();
-```
-
 #### 在类中注入使用
 
 ```csharp
@@ -119,9 +149,9 @@ public class MyService
 
     public void DoWork()
     {
-        _logger.LogInformation("开始执行任务");
-        _logger.LogDebug("处理数据: {Count}", 100);
-        _logger.LogInformation("任务完成");
+        _logger.ZLogInformation($"开始执行任务");
+        _logger.ZLogDebug($"处理数据: {100}");
+        _logger.ZLogInformation($"任务完成");
     }
 }
 ```
@@ -143,95 +173,13 @@ public class WeatherController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        _logger.LogInformation("获取天气数据");
+        _logger.ZLogInformation($"获取天气数据");
         return Ok(new { Temperature = 25 });
     }
 }
 ```
 
-## 配置方式
-
-### 方式一：通过 appsettings.json 配置（推荐）
-
-这是最简单的配置方式，支持热重载，修改配置文件后自动生效。
-
-#### 1. 在 Program.cs 中注册服务
-```csharp
-builder.Services.AddZLogger();
-```
-
-#### 2. 在项目根目录创建或修改 appsettings.json
-```json
-{
-  "ZLogger": {
-    "LogLevel": {
-      "Default": "Information",
-      "System.Net.Http.HttpClient": "Warning",
-      "Microsoft.EntityFrameworkCore.Database.Command": "Warning",
-      "Microsoft.AspNetCore": "Warning"
-      //或者其他
-    }
-  }
-}
-```
-
-**配置说明：**
-- `Default`: 默认日志级别
-- `System.Net.Http.HttpClient`: 屏蔽 HttpClient 的 Information 级别日志
-- `Microsoft.EntityFrameworkCore.Database.Command`: 屏蔽 EF Core SQL 命令日志
-- `Microsoft.AspNetCore`: 屏蔽 ASP.NET Core 框架日志
-
-### 方式二：通过代码配置
-
-#### 使用 Action 配置
-```csharp
-builder.Services.AddZLogger(config =>
-{
-    // 设置默认最低日志级别
-    config.MinimumLevel = LogLevel.Information;
-    
-    // 添加类别过滤器（屏蔽 HttpClient 日志）
-    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
-    config.CategoryFilters["Microsoft.EntityFrameworkCore"] = LogLevel.Warning;
-    
-    // 如果不想从 appsettings.json 读取配置，可设置为 false
-    config.UseConfigurationFile = false;
-});
-```
-
-#### 使用配置对象
-```csharp
-var logConfig = new ZLoggerConfig
-{
-    MinimumLevel = LogLevel.Information,
-    CategoryFilters = new Dictionary<string, LogLevel>
-    {
-        ["System.Net.Http.HttpClient"] = LogLevel.Warning,
-        ["Microsoft.EntityFrameworkCore"] = LogLevel.Warning
-    },
-    UseConfigurationFile = false
-};
-
-builder.Services.AddZLogger(logConfig);
-```
-
-### 方式三：全局配置（工厂模式）
-
-在应用启动时配置全局日志设置：
-
-```csharp
-// 使用 Action 配置
-ZlogFactory.ConfigureDefaults(config =>
-{
-    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
-    config.UseConfigurationFile = true;
-});
-
-// 然后正常使用
-var logger = ZlogFactory.Get<MyClass>();
-logger.LogInformation("这是一条日志");
-```
-
+#### 
 ### 常见日志类别名称
 
 | 类别名称 | 说明 |
@@ -247,9 +195,9 @@ logger.LogInformation("这是一条日志");
 
 ### 默认配置
 
-- **Trace/Debug 日志**：输出到 `logs/trace/` 目录
-- **Info 及以上日志**：输出到 `logs/` 目录
-- **滚动策略**：每小时自动滚动，单文件超过 2MB 时自动创建新文件
+- **Trace/Debug 日志**：输出到 `logs/trace/` 目录（可通过 `TraceLogPath` 配置）
+- **Info 及以上日志**：输出到 `logs/` 目录（可通过 `InfoLogPath` 配置）
+- **滚动策略**：每小时自动滚动（可通过 `RollingInterval` 配置），单文件超过 2MB 时自动创建新文件（可通过 `RollingSizeKB` 配置）
 - **文件名格式**：`yyyy-MM-dd-HH_001.log`
 
 ### 日志格式
@@ -263,21 +211,41 @@ logger.LogInformation("这是一条日志");
 
 格式说明：
 - 时间戳（本地时间）
+
 - 日志级别（3 字符缩写：TRC/DBG/INF/WRN/ERR/CRT）
+
 - 类名和行号
+
 - 日志消息
+
 - 异常信息（如果有）
 
-### 使用结构化日志
+  
 
-```csharp
-// 推荐：使用占位符
-logger.LogInformation("用户 {UserId} 下载了文件 {FileName}，大小: {FileSize} bytes", 
-    userId, fileName, fileSize);
+### ⚠️ 注意事项
 
-// 不推荐：字符串拼接
-logger.LogInformation($"用户 {userId} 下载了文件 {fileName}，大小: {fileSize} bytes");
-```
+1. **必须使用字符串插值**：ZLogger 方法要求使用 `$""` 字符串插值，出于性能角度
+   ```csharp
+   // ✅ 正确
+   logger.ZLogInformation($"消息内容");
+   
+   // ❌ 错误：会报 CS9205 错误
+   logger.ZLogInformation("消息内容");
+   ```
+
+2. **异常记录**：第一个参数传递异常对象
+   ```csharp
+   try {
+       // 业务代码
+   } catch (Exception ex) {
+       logger.ZLogError(ex, $"操作失败: {operation}");
+   }
+   ```
+
+3. **无参数日志**：即使没有变量，也要使用 `$""`
+   ```csharp
+   logger.ZLogInformation($"应用启动成功");
+   ```
 
 ### 如何完全禁用某个类别的日志？
 

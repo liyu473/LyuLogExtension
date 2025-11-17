@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -62,6 +63,26 @@ public static class ZlogServiceExtensions
         ZLoggerConfig config)
     {
         var factory = ZlogFactory.CreateFactoryWithConfig(config);
+        ZlogFactory.SetFactory(factory);
+        services.AddSingleton(factory);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        
+        return services;
+    }
+
+    /// <summary>
+    /// 添加 ZLogger 日志服务，从 IConfiguration 读取配置（推荐）
+    /// 默认从 "ZLogger" 配置节读取，类似 Serilog 的使用方式
+    /// </summary>
+    /// <param name="services">服务集合</param>
+    /// <param name="configuration">配置对象</param>
+    /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
+    public static IServiceCollection AddZLogger(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string configSectionName = "ZLogger")
+    {
+        var factory = ZlogFactory.CreateFactoryFromConfiguration(configuration, configSectionName);
         ZlogFactory.SetFactory(factory);
         services.AddSingleton(factory);
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));

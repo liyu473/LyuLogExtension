@@ -57,10 +57,103 @@ public static class ZlogFactory
             logging.ClearProviders();
             logging.SetMinimumLevel(config.TraceMinimumLevel);
 
-            if (config.UseConfigurationFile)
+            logging.AddZLoggerRollingFile(options =>
             {
-                ApplyConfigurationFile(logging, config.ConfigurationFilePath);
+                var tracePath = config.TraceLogPath ?? "logs/trace/";
+                options.FilePathSelector = (timestamp, sequenceNumber) =>
+                    $"{tracePath}{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
+                options.RollingInterval = config.RollingInterval ?? RollingInterval.Hour;
+                options.RollingSizeKB = config.RollingSizeKB ?? 2048;
+
+                ConfigureFormatter(options);
+                ConfigureOptions(options);
+            });
+
+            // 应用自定义过滤器
+            ApplyFilters(logging, config.CategoryFilters);
+
+            // 只记录 Trace 和 Debug
+            logging.AddFilter((category, level) => level < LogLevel.Information);
+        });
+
+        // 创建 Info 及以上日志工厂
+        var infoFactory = LoggerFactory.Create(logging =>
+        {
+            logging.ClearProviders();
+            logging.SetMinimumLevel(config.MinimumLevel);
+
+            logging.AddZLoggerRollingFile(options =>
+            {
+                var infoPath = config.InfoLogPath ?? "logs/";
+                options.FilePathSelector = (timestamp, sequenceNumber) =>
+                    $"{infoPath}{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
+                options.RollingInterval = config.RollingInterval ?? RollingInterval.Hour;
+                options.RollingSizeKB = config.RollingSizeKB ?? 2048;
+
+                ConfigureFormatter(options);
+                ConfigureOptions(options);
+            });
+
+            ApplyFilters(logging, config.CategoryFilters);
+        });
+
+        // 返回组合工厂
+        return new CompositeLoggerFactory(traceFactory, infoFactory);
+    }
+
+    /// <summary>
+    /// 从 IConfiguration 创建 LoggerFactory（推荐方式，类似 Serilog）
+    /// </summary>
+    /// <param name="configuration">配置对象</param>
+    /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
+    public static ILoggerFactory CreateFactoryFromConfiguration(
+        IConfiguration configuration, 
+        string configSectionName = "ZLogger")
+    {
+        var config = new ZLoggerConfig();
+        var configSection = configuration.GetSection(configSectionName);
+        
+        // 从配置中读取日志级别
+        if (configSection.Exists())
+        {
+            var minLevel = configSection["MinimumLevel"];
+            if (Enum.TryParse<LogLevel>(minLevel, out var parsedMinLevel))
+            {
+                config.MinimumLevel = parsedMinLevel;
             }
+            
+            var traceLevel = configSection["TraceMinimumLevel"];
+            if (Enum.TryParse<LogLevel>(traceLevel, out var parsedTraceLevel))
+            {
+                config.TraceMinimumLevel = parsedTraceLevel;
+            }
+            
+            // 读取类别过滤器
+            var logLevelSection = configSection.GetSection("LogLevel");
+            if (logLevelSection.Exists())
+            {
+                foreach (var item in logLevelSection.GetChildren())
+                {
+                    if (Enum.TryParse<LogLevel>(item.Value, out var level))
+                    {
+                        config.CategoryFilters[item.Key] = level;
+                    }
+                }
+            }
+        }
+        
+        // 创建 Trace/Debug 日志工厂
+        var traceFactory = LoggerFactory.Create(logging =>
+        {
+            logging.ClearProviders();
+            logging.SetMinimumLevel(config.TraceMinimumLevel);
+            
+            // 从配置中应用日志级别配置
+            if (configSection.Exists())
+            {
+                logging.AddConfiguration(configSection);
+            }
+            
             logging.AddZLoggerRollingFile(options =>
             {
                 options.FilePathSelector = (timestamp, sequenceNumber) =>
@@ -85,11 +178,12 @@ public static class ZlogFactory
             logging.ClearProviders();
             logging.SetMinimumLevel(config.MinimumLevel);
 
-            // 从配置文件加载配置（如果启用）
-            if (config.UseConfigurationFile)
+            // 从配置中应用日志级别配置
+            if (configSection.Exists())
             {
-                ApplyConfigurationFile(logging, config.ConfigurationFilePath);
+                logging.AddConfiguration(configSection);
             }
+            
             logging.AddZLoggerRollingFile(options =>
             {
                 options.FilePathSelector = (timestamp, sequenceNumber) =>
@@ -142,31 +236,10 @@ public static class ZlogFactory
         // 启用调用者信息捕获
         options.IncludeScopes = true; // 启用作用域支持
         options.CaptureThreadInfo = true; // 捕获线程信息
-    }
-
-    /// <summary>
-    /// 应用配置文件（appsettings.json）
-    /// </summary>
-    private static void ApplyConfigurationFile(ILoggingBuilder logging, string? configFilePath)
-    {
-        try
-        {
-            var basePath = configFilePath ?? Directory.GetCurrentDirectory();
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .Build();
-
-            var loggingSection = configuration.GetSection("ZLogger");
-            if (loggingSection.Exists())
-            {
-                logging.AddConfiguration(loggingSection);
-            }
-        }
-        catch
-        {
-            // 如果配置文件不存在或读取失败，静默失败
-        }
+        
+        // 注意：标准的 ILogger.LogInformation 无法自动获取行号
+        // 建议使用 ZLogger 的专用方法：logger.ZLogInformation($"消息")
+        // 如果必须使用 LogInformation，行号将显示为 0
     }
 
     /// <summary>
