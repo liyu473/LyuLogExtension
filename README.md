@@ -5,83 +5,42 @@
 
 基于 ZLogger 高性能的日志简易扩展库，内置简单配置的日志记录功能，支持工厂模式和依赖注入两种使用方式。
 
-因为这是简易的日志拓展，目的是为了简化配置，所以除了过滤器配置外，其余使用默认配置足够了，如果对日志配置需求较特殊，那就失去了此拓展的意义。
+**简化配置，开箱即用** - 专为快速开发设计，提供合理的默认配置。如需复杂定制，建议直接使用 ZLogger 原生 API。
 
+## ✨ 特性
 
-## 特性
-
-- 📝 **自动日志分级**：Trace/Debug 和 Info 及以上级别分别输出到不同文件
+- 📝 **自动日志分级**：Trace/Debug 和 Info+ 级别分别输出到不同文件
 - 🔄 **滚动日志**：按小时自动滚动（可配置），单文件最大 2MB（可配置）
 - 📍 **调用位置追踪**：自动记录类名和行号（使用 ZLog* 方法）
 - ⚡ **高性能**：基于 ZLogger 的高性能日志框架
 - ⚙️ **灵活配置**：支持 appsettings.json 或代码配置，可自定义日志级别和过滤规则
 
-## 依赖项
+## 🙏 致谢
 
-依赖Zlogger
-感谢Zlogger研发团队 ： https://github.com/Cysharp/ZLogger
+本项目基于 [ZLogger](https://github.com/Cysharp/ZLogger) 构建，感谢 Cysharp 团队的优秀工作！
 
-## 快速开始
-
-### 方式一：从配置文件读取（推荐）
-
-#### 配置文件 + 控制台输出（开发环境推荐）
+## 🚀 快速开始
 
 ```csharp
-services.AddZLogger(context.Configuration, logging =>
+// ASP.NET Core / Web API
+var builder = WebApplication.CreateBuilder(args);
+
+//默认配置
+builder.Services.AddZLogger(config =>
 {
-    // logging.AddZLoggerConsole();  // 添加控制台输出
+    // 可选：配置日志过滤器（推荐屏蔽框架噪音）
+    config.CategoryFilters["Microsoft"] = LogLevel.Warning;
+    config.CategoryFilters["Microsoft.AspNetCore"] = LogLevel.Warning;
+    config.CategoryFilters["Microsoft.Hosting.Lifetime"] = LogLevel.Information;
+    
+    // 控制台输出
+    config.AdditionalConfiguration = logging =>
+    {
+        logging.AddZLoggerConsoleWithTimestamp();
+    };
 });
 
-//直接使用默认
-builder.Services.AddZLogger(
-    logging =>
-    {
-        // 配置控制台输出格式
-        logging.AddZLoggerConsole(options =>
-        {
-            options.UsePlainTextFormatter(formatter =>
-            {
-                formatter.SetPrefixFormatter(
-                    $"{0:yyyy-MM-dd HH:mm:ss.fff} [{1:short}] [{2}] ",
-                    (in MessageTemplate template, in LogInfo info) =>
-                        template.Format(info.Timestamp, info.LogLevel, info.Category)
-                );
-            });
-        });
-    }
-);
-```
-
-#### 完整示例
-
-```csharp
-return Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration((context, config) =>
-    {
-        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-        config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", 
-            optional: true, reloadOnChange: true);
-    })
-    .ConfigureServices((context, services) =>
-    {
-        // 根据环境选择配置
-        if (context.HostingEnvironment.IsDevelopment())
-        {
-            // 开发环境：配置文件 + 控制台
-            services.AddZLogger(context.Configuration, logging =>
-            {
-                logging.AddZLoggerConsole();
-            });
-        }
-        else
-        {
-            // 生产环境：仅配置文件
-            services.AddZLogger(context.Configuration);
-        }
-        
-        // 其他服务注册...
-    });
+var app = builder.Build();
 ```
 
 **appsettings.json 完整配置示例：**
@@ -170,45 +129,11 @@ services.AddZLogger(logging =>
 | `RollingInterval` | `Hour` | 日志文件滚动间隔（Hour/Day/Month等） |
 | `RollingSizeKB` | `2048` | 单个日志文件最大大小（KB） |
 
-## 使用方式（前提是配置好了）
+## 📝 使用方式
 
-### 方式一：工厂模式（静态使用）
+### 🏭 方式一：依赖注入（推荐）
 
-适用于不使用依赖注入的场景，如控制台应用、类库等。
-
-#### 基本用法
-
-```csharp
-using LogExtension;
-
-// 获取日志记录器
-var logger = ZlogFactory.Get<Program>();
-
-// 记录日志
-logger.ZLogInformation("应用启动");
-logger.ZLogDebug($"调试信息: {Value}");
-```
-
-### 方式二：依赖注入（DI）
-
-适用于 ASP.NET Core、Worker Service 等支持依赖注入的场景。
-
-#### 注册服务
-
-在 `Program.cs` 或 `Startup.cs` 中注册日志服务：
-
-```csharp
-using LogExtension;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// 添加 ZLogger 日志服务（使用默认配置）
-builder.Services.AddZLogger();
-
-var app = builder.Build();
-```
-
-#### 在类中注入使用
+适用于 ASP.NET Core、Worker Service 等支持依赖注入的场景：
 
 ```csharp
 public class MyService
@@ -229,31 +154,24 @@ public class MyService
 }
 ```
 
-#### 在控制器中使用
+### ⚙️ 方式二：工厂模式（静态使用）
+
+适用于控制台应用、类库等不使用依赖注入的场景：
 
 ```csharp
-[ApiController]
-[Route("api/[controller]")]
-public class WeatherController : ControllerBase
-{
-    private readonly ILogger<WeatherController> _logger;
+using LogExtension;
 
-    public WeatherController(ILogger<WeatherController> logger)
-    {
-        _logger = logger;
-    }
+// 获取日志记录器
+var logger = ZlogFactory.Get<Program>();
 
-    [HttpGet]
-    public IActionResult Get()
-    {
-        _logger.ZLogInformation($"获取天气数据");
-        return Ok(new { Temperature = 25 });
-    }
-}
+// 记录日志
+logger.ZLogInformation($"应用启动");
+logger.ZLogDebug($"调试信息: {42}");
 ```
 
-#### 
-### 常见日志类别名称
+## 📋 常见日志过滤配置
+
+### 推荐的框架日志过滤
 
 | 类别名称 | 说明 |
 |---------|------|
@@ -264,66 +182,89 @@ public class WeatherController : ControllerBase
 | `Microsoft.AspNetCore` | ASP.NET Core 框架日志 |
 | `Microsoft.Hosting.Lifetime` | 应用程序生命周期日志 |
 
-## 日志输出
+## 📁 日志输出说明
 
-### 默认配置
+### 默认文件结构
 
-- **Trace/Debug 日志**：输出到 `logs/trace/` 目录（可通过 `TraceLogPath` 配置）
-- **Info 及以上日志**：输出到 `logs/` 目录（可通过 `InfoLogPath` 配置）
-- **滚动策略**：每小时自动滚动（可通过 `RollingInterval` 配置），单文件超过 2MB 时自动创建新文件（可通过 `RollingSizeKB` 配置）
-- **文件名格式**：`yyyy-MM-dd-HH_001.log`
+```
+your-project/
+├── logs/                    # Info+ 级别日志
+│   └── 2025-11-26-19_001.log
+└── logs/trace/              # Trace/Debug 日志  
+    └── 2025-11-26-19_001.log
+```
 
 ### 日志格式
 
+**控制台输出（彩色）：**
 ```
-2024-11-15 14:30:25.123 [INF] [MyNamespace.MyClass:42] 这是日志消息
-2024-11-15 14:30:26.456 [ERR] [MyNamespace.MyClass:45] 发生错误
-异常: System.InvalidOperationException: 操作无效
-堆栈: at MyNamespace.MyClass.Method() in C:\Path\To\File.cs:line 45
+2025-11-26 19:14:40.692 [INF] Application started successfully
+2025-11-26 19:14:40.693 [WRN] Configuration value is missing
+2025-11-26 19:14:40.694 [ERR] Operation failed
 ```
 
-格式说明：
-- 时间戳（本地时间）
-
-- 日志级别（3 字符缩写：TRC/DBG/INF/WRN/ERR/CRT）
-
-- 类名和行号
-
-- 日志消息
-
-- 异常信息（如果有）
+**文件输出（详细）：**
+```
+2025-11-26 19:14:40.692 [INF] [MyApp.Services.UserService:42] User login successful: admin
+2025-11-26 19:14:40.693 [ERR] [MyApp.Controllers.ApiController:78] Database connection failed
+异常: System.InvalidOperationException: Connection timeout
+堆栈: at MyApp.Controllers.ApiController.GetData() in C:\MyApp\Controllers\ApiController.cs:line 78
+```
 
   
 
-### ⚠️ 注意事项
+## ⚠️ 重要提醒
 
-1. **必须使用字符串插值**：ZLogger 方法要求使用 `$""` 字符串插值，出于性能角度
-   ```csharp
-   // ✅ 正确
-   logger.ZLogInformation($"消息内容");
-   
-   // ❌ 错误：会报 CS9205 错误
-   logger.ZLogInformation("消息内容");
-   ```
+### 1. 字符串插值语法（必须）
 
-2. **异常记录**：第一个参数传递异常对象
-   ```csharp
-   try {
-       // 业务代码
-   } catch (Exception ex) {
-       logger.ZLogError(ex, $"操作失败: {operation}");
-   }
-   ```
+```csharp
+// ✅ 正确 - 必须使用 $"" 语法
+logger.ZLogInformation($"用户登录: {username}");
+logger.ZLogInformation($"操作完成");  // 即使无变量也要用 $""
 
-3. **无参数日志**：即使没有变量，也要使用 `$""`
-   ```csharp
-   logger.ZLogInformation($"应用启动成功");
-   ```
+// ❌ 错误 - 会编译报错 CS9205
+logger.ZLogInformation("用户登录");
+```
 
-### 如何完全禁用某个类别的日志？
+### 2. 异常记录
 
-设置日志级别为 `None`：
-```json
+```csharp
+try 
+{
+    // 业务代码
+} 
+catch (Exception ex) 
+{
+    logger.ZLogError(ex, $"操作失败: {operation}");
+}
+```
+
+## 🔧 进阶配置
+
+### 控制台输出格式
+
+内置两种控制台格式：
+
+```csharp
+// 1. 简洁格式（仅时间戳 + 级别）
+logging.AddZLoggerConsoleWithTimestamp();
+// 输出：2025-11-26 19:14:40.692 [INF] 应用启动成功
+
+// 2. 详细格式（时间戳 + 级别 + 类名）  
+logging.AddZLoggerConsoleWithDetails();
+// 输出：2025-11-26 19:14:40.692 [INF] [MyApp.Services.UserService] 用户登录成功
+
+// 3. 原生格式（ZLogger 默认）
+logging.AddZLoggerConsole();
+```
+
+### 完全禁用某类别日志
+
+```csharp
+// 方式1：代码配置
+config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.None;
+
+// 方式2：appsettings.json
 {
   "ZLogger": {
     "LogLevel": {
@@ -333,16 +274,31 @@ public class WeatherController : ControllerBase
 }
 ```
 
-或者通过代码：
-```csharp
-config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.None;
-```
+## 📄 更新日志
 
-## License
+### v1.5.0 (2025-11-26)
+- ✨ 新增控制台格式化扩展方法
+  - `AddZLoggerConsoleWithTimestamp()` - 简洁格式
+  - `AddZLoggerConsoleWithDetails()` - 详细格式
+- 📝 更新文档和示例
 
-MIT License
+### v1.4.1 (2025-11-26)
+- 🐛 修复控制台日志重复输出问题
+- ✨ 优化日志分发逻辑
 
-## 相关链接
+### v1.4.0 (2025-11-26)  
+- ✨ 新增单参数 `AddZLogger(Action<ILoggingBuilder>)` 重载
+- 📝 改进文档和示例
 
-- [ZLogger 官方文档](https://github.com/Cysharp/ZLogger)
-- [Microsoft.Extensions.Logging 文档](https://docs.microsoft.com/aspnet/core/fundamentals/logging)
+---
+
+## 📜 License
+
+[MIT License](https://github.com/liyu473/LyuLogExtension/blob/main/LICENSE)
+
+## 🔗 相关链接
+
+- 📖 [ZLogger 官方文档](https://github.com/Cysharp/ZLogger)
+- 📚 [Microsoft.Extensions.Logging 文档](https://docs.microsoft.com/aspnet/core/fundamentals/logging)
+- 🐛 [问题反馈](https://github.com/liyu473/LyuLogExtension/issues)
+- 💬 [功能建议](https://github.com/liyu473/LyuLogExtension/discussions)
