@@ -32,6 +32,12 @@ services.AddZLogger(context.Configuration, logging =>
 {
     // logging.AddZLoggerConsole();  // 添加控制台输出
 });
+
+//直接使用默认
+services.AddZLogger(logging =>
+{
+    logging.AddZLoggerConsole();  // 添加控制台输出
+});
 ```
 
 #### 完整示例

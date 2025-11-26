@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Configuration;
 using Utf8StringInterpolation;
 using ZLogger;
 using ZLogger.Providers;
@@ -114,13 +113,13 @@ public static class ZlogFactory
     /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
     /// <param name="configureLogging">可选的额外日志配置（如控制台输出等）</param>
     public static ILoggerFactory CreateFactoryFromConfiguration(
-        IConfiguration configuration, 
+        IConfiguration configuration,
         string configSectionName = "ZLogger",
         Action<ILoggingBuilder>? configureLogging = null)
     {
         var config = new ZLoggerConfig();
         var configSection = configuration.GetSection(configSectionName);
-        
+
         // 从配置中读取日志级别
         if (configSection.Exists())
         {
@@ -129,40 +128,40 @@ public static class ZlogFactory
             {
                 config.MinimumLevel = parsedMinLevel;
             }
-            
+
             var traceLevel = configSection["TraceMinimumLevel"];
             if (Enum.TryParse<LogLevel>(traceLevel, out var parsedTraceLevel))
             {
                 config.TraceMinimumLevel = parsedTraceLevel;
             }
-            
+
             // 读取文件路径配置
             var traceLogPath = configSection["TraceLogPath"];
             if (!string.IsNullOrWhiteSpace(traceLogPath))
             {
                 config.TraceLogPath = traceLogPath;
             }
-            
+
             var infoLogPath = configSection["InfoLogPath"];
             if (!string.IsNullOrWhiteSpace(infoLogPath))
             {
                 config.InfoLogPath = infoLogPath;
             }
-            
+
             // 读取滚动间隔配置
             var rollingInterval = configSection["RollingInterval"];
             if (Enum.TryParse<RollingInterval>(rollingInterval, out var parsedInterval))
             {
                 config.RollingInterval = parsedInterval;
             }
-            
+
             // 读取文件大小配置
             var rollingSizeKB = configSection["RollingSizeKB"];
             if (int.TryParse(rollingSizeKB, out var parsedSize))
             {
                 config.RollingSizeKB = parsedSize;
             }
-            
+
             // 读取类别过滤器
             var logLevelSection = configSection.GetSection("LogLevel");
             if (logLevelSection.Exists())
@@ -176,10 +175,10 @@ public static class ZlogFactory
                 }
             }
         }
-        
+
         // 设置额外的日志配置
         config.AdditionalConfiguration = configureLogging;
-        
+
         // 使用读取到的配置创建工厂
         return CreateFactoryWithConfig(config);
     }
@@ -218,7 +217,7 @@ public static class ZlogFactory
         // 启用调用者信息捕获
         options.IncludeScopes = true; // 启用作用域支持
         options.CaptureThreadInfo = true; // 捕获线程信息
-        
+
         // 注意：标准的 ILogger.LogInformation 无法自动获取行号
         // 建议使用 ZLogger 的专用方法：logger.ZLogInformation($"消息")
         // 如果必须使用 LogInformation，行号将显示为 0

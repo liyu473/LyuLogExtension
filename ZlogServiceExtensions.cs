@@ -58,6 +58,29 @@ public static class ZlogServiceExtensions
     }
 
     /// <summary>
+    /// 添加 ZLogger 日志服务，使用默认配置，仅配置额外的日志提供程序
+    /// </summary>
+    /// <param name="services">服务集合</param>
+    /// <param name="configureLogging">配置额外的日志提供程序（如控制台、Debug等）</param>
+    public static IServiceCollection AddZLogger(
+        this IServiceCollection services,
+        Action<ILoggingBuilder> configureLogging
+    )
+    {
+        var config = new ZLoggerConfig
+        {
+            AdditionalConfiguration = configureLogging
+        };
+
+        var factory = ZlogFactory.CreateFactoryWithConfig(config);
+        ZlogFactory.SetFactory(factory);
+        services.AddSingleton(factory);
+        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+
+        return services;
+    }
+
+    /// <summary>
     /// 添加 ZLogger 日志服务，同时配置基础选项和日志提供程序
     /// </summary>
     /// <param name="services">服务集合</param>
