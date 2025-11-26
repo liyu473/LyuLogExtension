@@ -29,6 +29,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddZLogger(config =>
 {
     // 可选：配置日志过滤器（推荐屏蔽框架噪音）
+    // 对trace文件夹不生效
     config.CategoryFilters["Microsoft"] = LogLevel.Warning;
     config.CategoryFilters["Microsoft.AspNetCore"] = LogLevel.Warning;
     config.CategoryFilters["Microsoft.Hosting.Lifetime"] = LogLevel.Information;

@@ -68,10 +68,7 @@ public static class ZlogFactory
                 ConfigureOptions(options);
             });
 
-            // 应用自定义过滤器
-            ApplyFilters(logging, config.CategoryFilters);
-
-            // 只记录 Trace 和 Debug
+            // 只记录 Trace 和 Debug（trace工厂不应用自定义类别过滤器）
             logging.AddFilter((category, level) => level < LogLevel.Information);
         });
 
