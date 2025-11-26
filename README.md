@@ -34,10 +34,23 @@ services.AddZLogger(context.Configuration, logging =>
 });
 
 //直接使用默认
-services.AddZLogger(logging =>
-{
-    logging.AddZLoggerConsole();  // 添加控制台输出
-});
+builder.Services.AddZLogger(
+    logging =>
+    {
+        // 配置控制台输出格式
+        logging.AddZLoggerConsole(options =>
+        {
+            options.UsePlainTextFormatter(formatter =>
+            {
+                formatter.SetPrefixFormatter(
+                    $"{0:yyyy-MM-dd HH:mm:ss.fff} [{1:short}] [{2}] ",
+                    (in MessageTemplate template, in LogInfo info) =>
+                        template.Format(info.Timestamp, info.LogLevel, info.Category)
+                );
+            });
+        });
+    }
+);
 ```
 
 #### 完整示例
