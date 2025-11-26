@@ -68,9 +68,6 @@ public static class ZlogFactory
                 ConfigureOptions(options);
             });
 
-            // 应用额外配置（如控制台输出等）
-            config.AdditionalConfiguration?.Invoke(logging);
-
             // 应用自定义过滤器
             ApplyFilters(logging, config.CategoryFilters);
 
