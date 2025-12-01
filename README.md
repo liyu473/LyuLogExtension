@@ -197,7 +197,8 @@ your-project/
 
 ### 日志格式
 
-**控制台输出（彩色）：**
+**控制台输出：**
+
 ```
 2025-11-26 19:14:40.692 [INF] Application started successfully
 2025-11-26 19:14:40.693 [WRN] Configuration value is missing
@@ -205,6 +206,7 @@ your-project/
 ```
 
 **文件输出（详细）：**
+
 ```
 2025-11-26 19:14:40.692 [INF] [MyApp.Services.UserService:42] User login successful: admin
 2025-11-26 19:14:40.693 [ERR] [MyApp.Controllers.ApiController:78] Database connection failed
@@ -275,31 +277,10 @@ config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.None;
 }
 ```
 
-## 📄 更新日志
-
-### v1.5.0 (2025-11-26)
-- ✨ 新增控制台格式化扩展方法
-  - `AddZLoggerConsoleWithTimestamp()` - 简洁格式
-  - `AddZLoggerConsoleWithDetails()` - 详细格式
-- 📝 更新文档和示例
-
-### v1.4.1 (2025-11-26)
-- 🐛 修复控制台日志重复输出问题
-- ✨ 优化日志分发逻辑
-
-### v1.4.0 (2025-11-26)  
-- ✨ 新增单参数 `AddZLogger(Action<ILoggingBuilder>)` 重载
-- 📝 改进文档和示例
-
----
-
-## 📜 License
+## 
 
 [MIT License](https://github.com/liyu473/LyuLogExtension/blob/main/LICENSE)
 
 ## 🔗 相关链接
 
 - 📖 [ZLogger 官方文档](https://github.com/Cysharp/ZLogger)
-- 📚 [Microsoft.Extensions.Logging 文档](https://docs.microsoft.com/aspnet/core/fundamentals/logging)
-- 🐛 [问题反馈](https://github.com/liyu473/LyuLogExtension/issues)
-- 💬 [功能建议](https://github.com/liyu473/LyuLogExtension/discussions)
