@@ -165,6 +165,14 @@ using LogExtension;
 // 获取日志记录器
 var logger = ZlogFactory.Get<Program>();
 
+//修改配置
+ZlogFactory.ConfigureDefaults(config =>
+{
+    config.MinimumLevel = LogLevel.Debug;
+    config.CategoryFilters["System"] = LogLevel.Warning;
+    config.AdditionalConfiguration = logging => logging.AddZLoggerConsoleWithTimestamp();
+});
+
 // 记录日志
 logger.ZLogInformation($"应用启动");
 logger.ZLogDebug($"调试信息: {42}");
