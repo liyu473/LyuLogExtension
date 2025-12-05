@@ -1,10 +1,11 @@
+using LogExtension.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Utf8StringInterpolation;
 using ZLogger;
 using ZLogger.Providers;
 
-namespace LogExtension;
+namespace LogExtension.Extensions;
 
 /// <summary>
 /// ZLogger 内部配置扩展方法
@@ -101,8 +102,6 @@ internal static class ZLoggerOptionsExtensions
     {
         options.IncludeScopes = true;
         options.CaptureThreadInfo = true;
-        // 注意：标准的 ILogger.LogInformation 无法自动获取行号
-        // 建议使用 ZLogger 的专用方法：logger.ZLogInformation($"消息")
     }
 
     /// <summary>

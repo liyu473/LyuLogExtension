@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ZLogger.Providers;
 
-namespace LogExtension;
+namespace LogExtension.Core;
 
 /// <summary>
 /// ZLogger 配置选项

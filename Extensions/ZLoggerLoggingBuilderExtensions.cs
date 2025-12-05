@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
-namespace LogExtension;
+namespace LogExtension.Extensions;
 
 /// <summary>
 /// ZLogger ILoggingBuilder 扩展方法
 /// </summary>
-public static class ZLoggerBuilderExtensions
+public static class ZLoggerLoggingBuilderExtensions
 {
     /// <summary>
     /// 添加带时间戳格式的控制台输出

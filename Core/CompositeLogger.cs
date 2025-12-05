@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension;
+namespace LogExtension.Core;
 
 /// <summary>
 /// 组合多个 Logger，同时写入所有日志记录器
