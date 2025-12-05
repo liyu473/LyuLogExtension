@@ -1,4 +1,3 @@
-using LogExtension.Core;
 using LogExtension.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -176,28 +175,28 @@ public static class ZLoggerBuilderConfigExtensions
     public static ZLoggerBuilder FromConfiguration(this ZLoggerBuilder builder, IConfiguration configuration, string sectionName = "ZLogger")
     {
         var loadedConfig = configuration.ParseFromConfiguration(sectionName);
-        
+
         // 合并配置
         builder.Config.MinimumLevel = loadedConfig.MinimumLevel;
         builder.Config.TraceMinimumLevel = loadedConfig.TraceMinimumLevel;
-        
+
         if (!string.IsNullOrEmpty(loadedConfig.TraceLogPath))
             builder.Config.TraceLogPath = loadedConfig.TraceLogPath;
-        
+
         if (!string.IsNullOrEmpty(loadedConfig.InfoLogPath))
             builder.Config.InfoLogPath = loadedConfig.InfoLogPath;
-        
+
         if (loadedConfig.RollingInterval.HasValue)
             builder.Config.RollingInterval = loadedConfig.RollingInterval;
-        
+
         if (loadedConfig.RollingSizeKB.HasValue)
             builder.Config.RollingSizeKB = loadedConfig.RollingSizeKB;
-        
+
         foreach (var filter in loadedConfig.CategoryFilters)
         {
             builder.Config.CategoryFilters[filter.Key] = filter.Value;
         }
-        
+
         return builder;
     }
 

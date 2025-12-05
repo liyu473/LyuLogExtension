@@ -4,9 +4,9 @@ using ZLogger;
 namespace LogExtension.Extensions;
 
 /// <summary>
-/// ZLogger ILoggingBuilder 扩展方法
+/// ZLogger ILoggingBuilder 扩展方法（内部使用）
 /// </summary>
-public static class ZLoggerLoggingBuilderExtensions
+internal static class ZLoggerLoggingBuilderExtensions
 {
     /// <summary>
     /// 添加带时间戳格式的控制台输出

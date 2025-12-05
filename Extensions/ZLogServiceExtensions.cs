@@ -21,14 +21,6 @@ public static class ZLogServiceExtensions
     /// <summary>
     /// 添加 ZLogger 日志服务（使用链式配置）
     /// </summary>
-    /// <example>
-    /// services.AddZLogger(builder => builder
-    ///     .WithMinimumLevel(LogLevel.Debug)
-    ///     .WithInfoLogPath("logs/")
-    ///     .WithTraceLogPath("logs/trace/")
-    ///     .WithConsole()
-    ///     .FilterMicrosoft());
-    /// </example>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
         Action<ZLoggerBuilder> configure)
@@ -66,7 +58,7 @@ public static class ZLogServiceExtensions
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务（从 IConfiguration 读取配置并支持链式配置覆盖）
+    /// 添加 ZLogger 日志服务（从 IConfiguration 读取配置并覆盖）
     /// </summary>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,

@@ -11,46 +11,33 @@ namespace LogExtension;
 public static class ZLogFactory
 {
     private static ILoggerFactory? _customFactory;
-    private static ZLoggerConfig _defaultConfig = new();
+    private static readonly ZLoggerConfig DefaultConfig = new();
 
-    private static readonly Lazy<ILoggerFactory> _defaultFactory = new(
+    private static readonly Lazy<ILoggerFactory> LazyDefaultFactory = new(
         CreateDefaultFactory,
         LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
-    /// 默认 Factory（支持线程安全的懒加载，可被 SetFactory 覆盖）
+    /// 获取工厂
     /// </summary>
-    public static ILoggerFactory Factory => _customFactory ?? _defaultFactory.Value;
-
-    #region 配置方法
+    public static ILoggerFactory Factory => _customFactory ?? LazyDefaultFactory.Value;
 
     /// <summary>
-    /// 设置自定义 LoggerFactory（全局生效）
+    /// 获取指定类型的 Logger
     /// </summary>
-    public static void SetFactory(ILoggerFactory factory) => _customFactory = factory;
+    public static ILogger<T> Get<T>() => Factory.CreateLogger<T>();
+
+    #region 内部方法
 
     /// <summary>
-    /// 设置默认配置（全局生效）
+    /// 设置自定义 LoggerFactory（内部使用）
     /// </summary>
-    public static void SetDefaultConfig(ZLoggerConfig config) => _defaultConfig = config;
+    internal static void SetFactory(ILoggerFactory factory) => _customFactory = factory;
 
     /// <summary>
-    /// 设置默认配置（通过 Action 配置）
+    /// 使用指定配置创建 LoggerFactory（内部使用）
     /// </summary>
-    public static void ConfigureDefaults(Action<ZLoggerConfig> configure)
-    {
-        _defaultConfig = new ZLoggerConfig();
-        configure(_defaultConfig);
-    }
-
-    #endregion
-
-    #region 工厂创建方法
-
-    /// <summary>
-    /// 使用指定配置创建 LoggerFactory
-    /// </summary>
-    public static ILoggerFactory CreateFactoryWithConfig(ZLoggerConfig config)
+    internal static ILoggerFactory CreateFactoryWithConfig(ZLoggerConfig config)
     {
         var traceFactory = config.CreateTraceFactory();
         var infoFactory = config.CreateInfoFactory();
@@ -58,12 +45,9 @@ public static class ZLogFactory
     }
 
     /// <summary>
-    /// 从 IConfiguration 创建 LoggerFactory
+    /// 从 IConfiguration 创建 LoggerFactory（内部使用）
     /// </summary>
-    /// <param name="configuration">配置对象</param>
-    /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
-    /// <param name="configureLogging">可选的额外日志配置</param>
-    public static ILoggerFactory CreateFactoryFromConfiguration(
+    internal static ILoggerFactory CreateFactoryFromConfiguration(
         IConfiguration configuration,
         string configSectionName = "ZLogger",
         Action<ILoggingBuilder>? configureLogging = null)
@@ -73,15 +57,10 @@ public static class ZLogFactory
         return CreateFactoryWithConfig(config);
     }
 
-    /// <summary>
-    /// 获取指定类型的 Logger
-    /// </summary>
-    public static ILogger<T> Get<T>() => Factory.CreateLogger<T>();
-
-    #endregion
-
     private static ILoggerFactory CreateDefaultFactory()
     {
-        return CreateFactoryWithConfig(_defaultConfig);
+        return CreateFactoryWithConfig(DefaultConfig);
     }
+
+    #endregion
 }
