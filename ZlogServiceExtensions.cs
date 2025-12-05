@@ -7,122 +7,90 @@ namespace LogExtension;
 /// <summary>
 /// ZLogger 依赖注入扩展方法
 /// </summary>
-public static class ZlogServiceExtensions
+public static class ZLogServiceExtensions
 {
     /// <summary>
-    /// 添加 ZLogger 日志服务，使用默认配置（与 ZlogFactory 一致）
+    /// 添加 ZLogger 日志服务（使用默认配置）
     /// </summary>
     public static IServiceCollection AddZLogger(this IServiceCollection services)
     {
-        // 直接使用 ZlogFactory 的默认工厂
-        services.AddSingleton(ZlogFactory.Factory);
-
-        // 添加 ILogger<T> 泛型支持
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        return services.RegisterFactory(ZLogFactory.Factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，使用自定义工厂
+    /// 添加 ZLogger 日志服务（使用自定义工厂）
     /// </summary>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
-        ILoggerFactory customFactory
-    )
+        ILoggerFactory customFactory)
     {
-        ZlogFactory.SetFactory(customFactory);
-        services.AddSingleton(customFactory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        ZLogFactory.SetFactory(customFactory);
+        return services.RegisterFactory(customFactory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，使用 Action 配置
+    /// 添加 ZLogger 日志服务（使用 Action 配置）
     /// </summary>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
-        Action<ZLoggerConfig> configure
-    )
+        Action<ZLoggerConfig> configure)
     {
         var config = new ZLoggerConfig();
         configure(config);
 
-        var factory = ZlogFactory.CreateFactoryWithConfig(config);
-        ZlogFactory.SetFactory(factory);
-        services.AddSingleton(factory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        var factory = ZLogFactory.CreateFactoryWithConfig(config);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，使用默认配置，仅配置额外的日志提供程序
+    /// 添加 ZLogger 日志服务（仅配置额外的日志提供程序）
     /// </summary>
-    /// <param name="services">服务集合</param>
-    /// <param name="configureLogging">配置额外的日志提供程序（如控制台、Debug等）</param>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
-        Action<ILoggingBuilder> configureLogging
-    )
+        Action<ILoggingBuilder> configureLogging)
     {
         var config = new ZLoggerConfig
         {
             AdditionalConfiguration = configureLogging
         };
 
-        var factory = ZlogFactory.CreateFactoryWithConfig(config);
-        ZlogFactory.SetFactory(factory);
-        services.AddSingleton(factory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        var factory = ZLogFactory.CreateFactoryWithConfig(config);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，同时配置基础选项和日志提供程序
+    /// 添加 ZLogger 日志服务（同时配置基础选项和日志提供程序）
     /// </summary>
-    /// <param name="services">服务集合</param>
-    /// <param name="configure">配置 ZLoggerConfig</param>
-    /// <param name="configureLogging">配置额外的日志提供程序（如控制台、Debug等）</param>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
         Action<ILoggingBuilder> configureLogging,
-        Action<ZLoggerConfig> configure
-    )
+        Action<ZLoggerConfig> configure)
     {
         var config = new ZLoggerConfig();
         configure(config);
         config.AdditionalConfiguration = configureLogging;
 
-        var factory = ZlogFactory.CreateFactoryWithConfig(config);
-        ZlogFactory.SetFactory(factory);
-        services.AddSingleton(factory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        var factory = ZLogFactory.CreateFactoryWithConfig(config);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，使用配置对象
+    /// 添加 ZLogger 日志服务（使用配置对象）
     /// </summary>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
-        ZLoggerConfig config
-    )
+        ZLoggerConfig config)
     {
-        var factory = ZlogFactory.CreateFactoryWithConfig(config);
-        ZlogFactory.SetFactory(factory);
-        services.AddSingleton(factory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        var factory = ZLogFactory.CreateFactoryWithConfig(config);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，从 IConfiguration 读取配置
-    /// 默认从 "ZLogger" 配置节读取
+    /// 添加 ZLogger 日志服务（从 IConfiguration 读取配置）
     /// </summary>
     /// <param name="services">服务集合</param>
     /// <param name="configuration">配置对象</param>
@@ -130,41 +98,43 @@ public static class ZlogServiceExtensions
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
         IConfiguration configuration,
-        string configSectionName = "ZLogger"
-    )
+        string configSectionName = "ZLogger")
     {
-        var factory = ZlogFactory.CreateFactoryFromConfiguration(configuration, configSectionName);
-        ZlogFactory.SetFactory(factory);
-        services.AddSingleton(factory);
-        services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
-        return services;
+        var factory = ZLogFactory.CreateFactoryFromConfiguration(configuration, configSectionName);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
     }
 
     /// <summary>
-    /// 添加 ZLogger 日志服务，从 IConfiguration 读取配置并支持额外的日志提供程序
-    /// 默认从 "ZLogger" 配置节读取
+    /// 添加 ZLogger 日志服务（从 IConfiguration 读取配置并支持额外的日志提供程序）
     /// </summary>
     /// <param name="services">服务集合</param>
     /// <param name="configuration">配置对象</param>
-    /// <param name="configureLogging">配置额外的日志提供程序（如控制台、Debug等）</param>
+    /// <param name="configureLogging">配置额外的日志提供程序</param>
     /// <param name="configSectionName">配置节名称，默认为 "ZLogger"</param>
     public static IServiceCollection AddZLogger(
         this IServiceCollection services,
         IConfiguration configuration,
         Action<ILoggingBuilder> configureLogging,
-        string configSectionName = "ZLogger"
-    )
+        string configSectionName = "ZLogger")
     {
-        var factory = ZlogFactory.CreateFactoryFromConfiguration(
+        var factory = ZLogFactory.CreateFactoryFromConfiguration(
             configuration,
             configSectionName,
-            configureLogging
-        );
-        ZlogFactory.SetFactory(factory);
+            configureLogging);
+        ZLogFactory.SetFactory(factory);
+        return services.RegisterFactory(factory);
+    }
+
+    /// <summary>
+    /// 注册 LoggerFactory 和泛型 Logger 到服务容器
+    /// </summary>
+    private static IServiceCollection RegisterFactory(
+        this IServiceCollection services,
+        ILoggerFactory factory)
+    {
         services.AddSingleton(factory);
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-
         return services;
     }
 }
