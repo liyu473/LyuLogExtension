@@ -27,6 +27,16 @@ public static class ZLogFactory
     /// </summary>
     public static ILogger<T> Get<T>() => Factory.CreateLogger<T>();
 
+    /// <summary>
+    /// 配置初始化全局 LoggerFactory（静态方式）
+    /// </summary>
+    public static void Configure(Action<Builder.ZLoggerBuilder> configure)
+    {
+        var builder = new Builder.ZLoggerBuilder();
+        configure(builder);
+        _customFactory = builder.Build();
+    }
+
     #region 内部方法
 
     /// <summary>
