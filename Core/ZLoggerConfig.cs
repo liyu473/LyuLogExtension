@@ -28,7 +28,7 @@ internal class ZLoggerConfig
     /// Key: 类别名称（如 "System.Net.Http"）
     /// Value: 最低日志级别
     /// </summary>
-    public Dictionary<string, LogLevel> CategoryFilters { get; set; } = new();
+    public Dictionary<string, LogLevel> CategoryFilters { get; set; } = [];
 
     /// <summary>
     /// 额外的日志配置回调（如添加控制台、Debug 输出等）
