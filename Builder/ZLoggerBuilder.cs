@@ -10,27 +10,33 @@ namespace LogExtension.Builder;
 public class ZLoggerBuilder
 {
     internal ZLoggerConfig Config { get; } = new();
-    internal bool EnableConsole { get; set; }
-    internal bool EnableConsoleWithDetails { get; set; }
 
     /// <summary>
     /// 构建 LoggerFactory
     /// </summary>
     public ILoggerFactory Build()
     {
-        if (EnableConsole || EnableConsoleWithDetails)
+        var factories = new List<ILoggerFactory>();
+
+        // 为每个输出配置创建工厂
+        foreach (var output in Config.Outputs)
         {
-            var originalConfig = Config.AdditionalConfiguration;
-            Config.AdditionalConfiguration = builder =>
-            {
-                originalConfig?.Invoke(builder);
-                if (EnableConsoleWithDetails)
-                    builder.AddZLoggerConsoleWithDetails();
-                else if (EnableConsole)
-                    builder.AddZLoggerConsoleWithTimestamp();
-            };
+            factories.Add(output.CreateFactoryForOutput(Config));
         }
 
-        return ZLogFactory.CreateFactoryWithConfig(Config);
+        // 如果没有配置任何输出，添加默认输出
+        if (factories.Count == 0)
+        {
+            var defaultOutput = new LogOutputConfig { Path = "logs/" };
+            factories.Add(defaultOutput.CreateFactoryForOutput(Config));
+        }
+
+        // 添加控制台工厂
+        if (Config.EnableConsole || Config.EnableConsoleWithDetails)
+        {
+            factories.Add(Config.CreateConsoleFactory());
+        }
+
+        return new CompositeLoggerFactory([.. factories]);
     }
 }

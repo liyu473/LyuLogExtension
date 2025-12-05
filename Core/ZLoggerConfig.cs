@@ -4,39 +4,24 @@ using ZLogger.Providers;
 namespace LogExtension.Core;
 
 /// <summary>
-/// ZLogger 配置选项
+/// ZLogger 配置选项（内部使用）
 /// </summary>
-public class ZLoggerConfig
+internal class ZLoggerConfig
 {
     /// <summary>
-    /// 默认最低日志级别（默认：Information）
+    /// 日志输出配置列表
     /// </summary>
-    public LogLevel MinimumLevel { get; set; } = LogLevel.Information;
+    public List<LogOutputConfig> Outputs { get; set; } = [];
 
     /// <summary>
-    /// Trace/Debug 日志的最低级别（默认：Trace）
+    /// 全局日志滚动间隔（默认：每小时）
     /// </summary>
-    public LogLevel TraceMinimumLevel { get; set; } = LogLevel.Trace;
+    public RollingInterval GlobalRollingInterval { get; set; } = RollingInterval.Hour;
 
     /// <summary>
-    /// Trace/Debug 日志文件路径（默认：logs/trace/）
+    /// 全局单个日志文件最大大小 KB（默认：2048KB = 2MB）
     /// </summary>
-    public string? TraceLogPath { get; set; }
-
-    /// <summary>
-    /// Info 及以上日志文件路径（默认：logs/）
-    /// </summary>
-    public string? InfoLogPath { get; set; }
-
-    /// <summary>
-    /// 日志滚动间隔（默认：每小时）
-    /// </summary>
-    public RollingInterval? RollingInterval { get; set; }
-
-    /// <summary>
-    /// 单个日志文件最大大小 KB（默认：2048KB = 2MB）
-    /// </summary>
-    public int? RollingSizeKB { get; set; }
+    public int GlobalRollingSizeKB { get; set; } = 2048;
 
     /// <summary>
     /// 日志级别过滤规则
@@ -49,4 +34,14 @@ public class ZLoggerConfig
     /// 额外的日志配置回调（如添加控制台、Debug 输出等）
     /// </summary>
     public Action<ILoggingBuilder>? AdditionalConfiguration { get; set; }
+
+    /// <summary>
+    /// 是否启用控制台输出
+    /// </summary>
+    public bool EnableConsole { get; set; }
+
+    /// <summary>
+    /// 是否启用控制台详情输出（带类名）
+    /// </summary>
+    public bool EnableConsoleWithDetails { get; set; }
 }

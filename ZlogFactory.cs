@@ -18,7 +18,7 @@ public static class ZLogFactory
         LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
-    /// 获取工厂
+    /// 默认 Factory（支持线程安全的懒加载，可被内部 SetFactory 覆盖）
     /// </summary>
     public static ILoggerFactory Factory => _customFactory ?? LazyDefaultFactory.Value;
 
@@ -39,9 +39,27 @@ public static class ZLogFactory
     /// </summary>
     internal static ILoggerFactory CreateFactoryWithConfig(ZLoggerConfig config)
     {
-        var traceFactory = config.CreateTraceFactory();
-        var infoFactory = config.CreateInfoFactory();
-        return new CompositeLoggerFactory(traceFactory, infoFactory);
+        var factories = new List<ILoggerFactory>();
+
+        foreach (var output in config.Outputs)
+        {
+            factories.Add(output.CreateFactoryForOutput(config));
+        }
+
+        // 如果没有配置任何输出，添加默认输出
+        if (factories.Count == 0)
+        {
+            var defaultOutput = new LogOutputConfig { Path = "logs/" };
+            factories.Add(defaultOutput.CreateFactoryForOutput(config));
+        }
+
+        // 添加控制台工厂
+        if (config.EnableConsole || config.EnableConsoleWithDetails)
+        {
+            factories.Add(config.CreateConsoleFactory());
+        }
+
+        return new CompositeLoggerFactory([.. factories]);
     }
 
     /// <summary>

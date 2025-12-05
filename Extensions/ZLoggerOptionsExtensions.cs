@@ -13,55 +13,54 @@ namespace LogExtension.Extensions;
 internal static class ZLoggerOptionsExtensions
 {
     /// <summary>
-    /// 创建 Trace/Debug 日志工厂
+    /// 为指定输出配置创建 LoggerFactory
     /// </summary>
-    internal static ILoggerFactory CreateTraceFactory(this ZLoggerConfig config)
+    internal static ILoggerFactory CreateFactoryForOutput(this LogOutputConfig output, ZLoggerConfig globalConfig)
     {
         return LoggerFactory.Create(logging =>
         {
             logging.ClearProviders();
-            logging.SetMinimumLevel(config.TraceMinimumLevel);
+            logging.SetMinimumLevel(output.MinLevel);
 
             logging.AddZLoggerRollingFile(options =>
             {
-                var tracePath = config.TraceLogPath ?? "logs/trace/";
                 options.FilePathSelector = (timestamp, sequenceNumber) =>
-                    $"{tracePath}{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
-                options.RollingInterval = config.RollingInterval ?? RollingInterval.Hour;
-                options.RollingSizeKB = config.RollingSizeKB ?? 2048;
+                    $"{output.Path}{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
+                options.RollingInterval = output.RollingInterval ?? globalConfig.GlobalRollingInterval;
+                options.RollingSizeKB = output.RollingSizeKB ?? globalConfig.GlobalRollingSizeKB;
 
                 options.ConfigureFormatter();
                 options.ConfigureOptions();
             });
 
-            // 只记录 Trace 和 Debug
-            logging.AddFilter((_, level) => level < LogLevel.Information);
+            // 应用级别过滤（min 和 max）
+            if (output.MaxLevel.HasValue)
+            {
+                logging.AddFilter((_, level) => level >= output.MinLevel && level <= output.MaxLevel.Value);
+            }
+            else
+            {
+                logging.AddFilter((_, level) => level >= output.MinLevel);
+            }
         });
     }
 
     /// <summary>
-    /// 创建 Info 及以上日志工厂
+    /// 创建控制台 LoggerFactory
     /// </summary>
-    internal static ILoggerFactory CreateInfoFactory(this ZLoggerConfig config)
+    internal static ILoggerFactory CreateConsoleFactory(this ZLoggerConfig config)
     {
         return LoggerFactory.Create(logging =>
         {
             logging.ClearProviders();
-            logging.SetMinimumLevel(config.MinimumLevel);
+            logging.SetMinimumLevel(LogLevel.Trace);
 
-            logging.AddZLoggerRollingFile(options =>
-            {
-                var infoPath = config.InfoLogPath ?? "logs/";
-                options.FilePathSelector = (timestamp, sequenceNumber) =>
-                    $"{infoPath}{timestamp.ToLocalTime():yyyy-MM-dd-HH}_{sequenceNumber:000}.log";
-                options.RollingInterval = config.RollingInterval ?? RollingInterval.Hour;
-                options.RollingSizeKB = config.RollingSizeKB ?? 2048;
+            if (config.EnableConsoleWithDetails)
+                logging.AddZLoggerConsoleWithDetails();
+            else
+                logging.AddZLoggerConsoleWithTimestamp();
 
-                options.ConfigureFormatter();
-                options.ConfigureOptions();
-            });
-
-            // 应用额外配置（如控制台输出等）
+            // 应用额外配置
             config.AdditionalConfiguration?.Invoke(logging);
 
             // 应用类别过滤器
@@ -79,13 +78,11 @@ internal static class ZLoggerOptionsExtensions
     {
         options.UsePlainTextFormatter(formatter =>
         {
-            // 前缀：时间戳 [3字符级别] [类型名:行号]
             formatter.SetPrefixFormatter(
                 $"{0:local-longdate} [{1:short}] [{2}:{3}] ",
                 (in MessageTemplate template, in LogInfo info) =>
                     template.Format(info.Timestamp, info.LogLevel, info.Category, info.LineNumber));
 
-            // 异常格式化
             formatter.SetExceptionFormatter((writer, ex) =>
             {
                 var message = ex?.Message ?? "Unknown error";
@@ -117,28 +114,39 @@ internal static class ZLoggerOptionsExtensions
         if (!section.Exists())
             return config;
 
-        // 解析日志级别
-        if (Enum.TryParse<LogLevel>(section["MinimumLevel"], out var minLevel))
-            config.MinimumLevel = minLevel;
+        // 解析全局滚动配置
+        if (Enum.TryParse<RollingInterval>(section["GlobalRollingInterval"], out var interval))
+            config.GlobalRollingInterval = interval;
 
-        if (Enum.TryParse<LogLevel>(section["TraceMinimumLevel"], out var traceLevel))
-            config.TraceMinimumLevel = traceLevel;
+        if (int.TryParse(section["GlobalRollingSizeKB"], out var sizeKB))
+            config.GlobalRollingSizeKB = sizeKB;
 
-        // 解析文件路径
-        var traceLogPath = section["TraceLogPath"];
-        if (!string.IsNullOrWhiteSpace(traceLogPath))
-            config.TraceLogPath = traceLogPath;
+        // 解析输出配置
+        var outputsSection = section.GetSection("Outputs");
+        if (outputsSection.Exists())
+        {
+            foreach (var outputSection in outputsSection.GetChildren())
+            {
+                var output = new LogOutputConfig
+                {
+                    Path = outputSection["Path"] ?? "logs/"
+                };
 
-        var infoLogPath = section["InfoLogPath"];
-        if (!string.IsNullOrWhiteSpace(infoLogPath))
-            config.InfoLogPath = infoLogPath;
+                if (Enum.TryParse<LogLevel>(outputSection["MinLevel"], out var minLevel))
+                    output.MinLevel = minLevel;
 
-        // 解析滚动配置
-        if (Enum.TryParse<RollingInterval>(section["RollingInterval"], out var interval))
-            config.RollingInterval = interval;
+                if (Enum.TryParse<LogLevel>(outputSection["MaxLevel"], out var maxLevel))
+                    output.MaxLevel = maxLevel;
 
-        if (int.TryParse(section["RollingSizeKB"], out var sizeKB))
-            config.RollingSizeKB = sizeKB;
+                if (Enum.TryParse<RollingInterval>(outputSection["RollingInterval"], out var outputInterval))
+                    output.RollingInterval = outputInterval;
+
+                if (int.TryParse(outputSection["RollingSizeKB"], out var outputSizeKB))
+                    output.RollingSizeKB = outputSizeKB;
+
+                config.Outputs.Add(output);
+            }
+        }
 
         // 解析类别过滤器
         var logLevelSection = section.GetSection("LogLevel");
