@@ -5,28 +5,21 @@ namespace LogExtension;
 /// <summary>
 /// 组合多个 Logger，同时写入所有日志记录器
 /// </summary>
-internal sealed class CompositeLogger : ILogger
+internal sealed class CompositeLogger(params ILogger[] loggers) : ILogger
 {
-    private readonly ILogger[] _loggers;
-
-    public CompositeLogger(params ILogger[] loggers)
-    {
-        _loggers = loggers;
-    }
-
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
-        var scopes = new IDisposable?[_loggers.Length];
-        for (var i = 0; i < _loggers.Length; i++)
+        var scopes = new IDisposable?[loggers.Length];
+        for (var i = 0; i < loggers.Length; i++)
         {
-            scopes[i] = _loggers[i].BeginScope(state);
+            scopes[i] = loggers[i].BeginScope(state);
         }
         return new CompositeDisposable(scopes);
     }
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        foreach (var logger in _loggers)
+        foreach (var logger in loggers)
         {
             if (logger.IsEnabled(logLevel))
                 return true;
@@ -41,7 +34,7 @@ internal sealed class CompositeLogger : ILogger
         Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        foreach (var logger in _loggers)
+        foreach (var logger in loggers)
         {
             logger.Log(logLevel, eventId, state, exception, formatter);
         }
@@ -50,18 +43,11 @@ internal sealed class CompositeLogger : ILogger
     /// <summary>
     /// 组合多个 IDisposable，统一释放
     /// </summary>
-    private sealed class CompositeDisposable : IDisposable
+    private sealed class CompositeDisposable(IDisposable?[] disposables) : IDisposable
     {
-        private readonly IDisposable?[] _disposables;
-
-        public CompositeDisposable(IDisposable?[] disposables)
-        {
-            _disposables = disposables;
-        }
-
         public void Dispose()
         {
-            foreach (var disposable in _disposables)
+            foreach (var disposable in disposables)
             {
                 disposable?.Dispose();
             }
