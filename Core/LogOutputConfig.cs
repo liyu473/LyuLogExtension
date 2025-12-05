@@ -32,4 +32,14 @@ internal class LogOutputConfig
     /// 单个日志文件最大大小 KB（null 使用全局配置）
     /// </summary>
     public int? RollingSizeKB { get; set; }
+
+    /// <summary>
+    /// 此输出的独立类别过滤器（优先于全局过滤器）
+    /// </summary>
+    public Dictionary<string, LogLevel> CategoryFilters { get; set; } = [];
+
+    /// <summary>
+    /// 是否使用全局过滤器（默认 true）
+    /// </summary>
+    public bool UseGlobalFilters { get; set; } = true;
 }

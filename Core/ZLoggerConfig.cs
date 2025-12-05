@@ -44,4 +44,14 @@ internal class ZLoggerConfig
     /// 是否启用控制台详情输出（带类名）
     /// </summary>
     public bool EnableConsoleWithDetails { get; set; }
+
+    /// <summary>
+    /// 控制台独立过滤器（优先于全局过滤器）
+    /// </summary>
+    public Dictionary<string, LogLevel> ConsoleCategoryFilters { get; set; } = [];
+
+    /// <summary>
+    /// 控制台是否使用全局过滤器（默认 true）
+    /// </summary>
+    public bool ConsoleUseGlobalFilters { get; set; } = true;
 }

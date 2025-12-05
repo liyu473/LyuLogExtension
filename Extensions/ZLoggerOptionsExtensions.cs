@@ -42,6 +42,21 @@ internal static class ZLoggerOptionsExtensions
             {
                 logging.AddFilter((_, level) => level >= output.MinLevel);
             }
+
+            // 应用全局类别过滤器
+            if (output.UseGlobalFilters)
+            {
+                foreach (var filter in globalConfig.CategoryFilters)
+                {
+                    logging.AddFilter(filter.Key, filter.Value);
+                }
+            }
+
+            // 应用此输出的独立过滤器（会覆盖全局）
+            foreach (var filter in output.CategoryFilters)
+            {
+                logging.AddFilter(filter.Key, filter.Value);
+            }
         });
     }
 
@@ -63,8 +78,17 @@ internal static class ZLoggerOptionsExtensions
             // 应用额外配置
             config.AdditionalConfiguration?.Invoke(logging);
 
-            // 应用类别过滤器
-            foreach (var filter in config.CategoryFilters)
+            // 应用全局类别过滤器
+            if (config.ConsoleUseGlobalFilters)
+            {
+                foreach (var filter in config.CategoryFilters)
+                {
+                    logging.AddFilter(filter.Key, filter.Value);
+                }
+            }
+
+            // 应用控制台独立过滤器（会覆盖全局）
+            foreach (var filter in config.ConsoleCategoryFilters)
             {
                 logging.AddFilter(filter.Key, filter.Value);
             }

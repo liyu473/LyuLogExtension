@@ -145,6 +145,10 @@ services.AddZLogger(configuration, builder => builder
 
 ## 过滤器配置
 
+### 全局过滤器
+
+对所有输出（文件和控制台）生效。
+
 ```csharp
 // 快捷方法
 .FilterMicrosoft()                          // Microsoft 命名空间 Warning+
@@ -164,6 +168,47 @@ services.AddZLogger(configuration, builder => builder
     ["MyApp.Debug"] = LogLevel.Information
 })
 ```
+
+### 输出独立过滤器
+
+每个输出（文件/控制台）可以有独立的过滤器。
+
+**文件输出独立过滤器：**
+
+```csharp
+services.AddZLogger(builder => builder
+    .FilterMicrosoft()  // 全局过滤器
+    .FilterSystem()
+    
+    // Info 输出 - 使用全局过滤器（默认）
+    .AddInfoOutput("logs/info/")
+    
+    // Trace 输出 - 不使用全局过滤器，只用独立过滤器
+    .AddFileOutput("logs/trace/", LogLevel.Trace, LogLevel.Debug)
+        .WithoutGlobalFilters()//移除全局过滤器配置
+        .WithOutputFilter("System.Net.Http", LogLevel.Debug)
+    
+    // Error 输出 - 使用全局 + 额外独立过滤器
+    .AddErrorOutput("logs/error/")
+        .WithOutputFilter("MyApp.Verbose", LogLevel.Error)
+);
+```
+
+**控制台独立过滤器：**
+
+```csharp
+services.AddZLogger(builder => builder
+    .FilterMicrosoft()  // 全局过滤器
+    .AddInfoOutput()
+    
+    // 控制台使用独立过滤器
+    .WithConsole()
+        .WithConsoleFilter("Microsoft", LogLevel.Error)
+        .WithConsoleWithoutGlobalFilters()
+);
+```
+
+**过滤器优先级：** 独立过滤器 > 全局过滤器
 
 ## 日志记录
 
@@ -222,7 +267,6 @@ logger.ZLogInformation($"消息");
 | 单文件大小 | 2MB |
 | 控制台 | 关闭 |
 | 过滤器 | 无 |
-
 ## 链式方法一览
 
 | 方法 | 说明 |
@@ -236,10 +280,16 @@ logger.ZLogInformation($"消息");
 | `WithRollingSizeKB(size)` | 全局单文件大小 |
 | `WithConsole()` | 启用控制台（时间戳） |
 | `WithConsoleDetails()` | 启用控制台（时间戳+类名） |
-| `WithFilter(category, level)` | 添加过滤器 |
-| `WithFilters(dict)` | 批量添加过滤器 |
+| `WithFilter(category, level)` | 添加全局过滤器 |
+| `WithFilters(dict)` | 批量添加全局过滤器 |
 | `FilterMicrosoft(level?)` | 过滤 Microsoft 命名空间 |
 | `FilterSystem(level?)` | 过滤 System 命名空间 |
+| `WithOutputFilter(category, level)` | 为最后文件输出添加独立过滤器 |
+| `WithOutputFilters(dict)` | 为最后文件输出批量添加独立过滤器 |
+| `WithoutGlobalFilters()` | 最后文件输出不使用全局过滤器 |
+| `WithConsoleFilter(category, level)` | 为控制台添加独立过滤器 |
+| `WithConsoleFilters(dict)` | 为控制台批量添加独立过滤器 |
+| `WithConsoleWithoutGlobalFilters()` | 控制台不使用全局过滤器 |
 | `FromConfiguration(config, section?)` | 从配置文件加载 |
 | `WithAdditionalConfiguration(action)` | 额外 ILoggingBuilder 配置 |
 
