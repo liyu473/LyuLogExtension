@@ -1,294 +1,252 @@
 # LyuLogExtension
 
 [![NuGet](https://img.shields.io/nuget/v/LyuLogExtension.svg)](https://www.nuget.org/packages/LyuLogExtension/)
-[![GitHub](https://img.shields.io/github/license/liyu473/LyuLogExtension)](https://github.com/liyu473/LyuLogExtension)
 
-基于 ZLogger 高性能的日志简易扩展库，内置简单配置的日志记录功能，支持工厂模式和依赖注入两种使用方式。
+基于 ZLogger 的日志扩展库。
 
-**简化配置，开箱即用** - 专为快速开发设计，提供合理的默认配置。如需复杂定制，建议直接使用 ZLogger 原生 API。
 
-## ✨ 特性
+## 安装
 
-- 📝 **自动日志分级**：Trace/Debug 和 Info+ 级别分别输出到不同文件
-- 🔄 **滚动日志**：按小时自动滚动（可配置），单文件最大 2MB（可配置）
-- 📍 **调用位置追踪**：自动记录类名和行号（使用 ZLog* 方法）
-- ⚡ **高性能**：基于 ZLogger 的高性能日志框架
-- ⚙️ **灵活配置**：支持 appsettings.json 或代码配置，可自定义日志级别和过滤规则
-
-## 🙏 致谢
-
-本项目基于 [ZLogger](https://github.com/Cysharp/ZLogger) 构建，感谢 Cysharp 团队的优秀工作！
-
-## 🚀 快速开始
-
-```csharp
-// ASP.NET Core / Web API
-var builder = WebApplication.CreateBuilder(args);
-
-//默认配置
-builder.Services.AddZLogger(config =>
-{
-    // 可选：配置日志过滤器（推荐屏蔽框架噪音）
-    // 对trace文件夹不生效
-    config.CategoryFilters["Microsoft"] = LogLevel.Warning;
-    config.CategoryFilters["Microsoft.AspNetCore"] = LogLevel.Warning;
-    config.CategoryFilters["Microsoft.Hosting.Lifetime"] = LogLevel.Information;
-    
-    // 控制台输出
-    config.AdditionalConfiguration = logging =>
-    {
-        logging.AddZLoggerConsoleWithTimestamp();
-    };
-});
-
-var app = builder.Build();
+```bash
+dotnet add package LyuLogExtension
 ```
 
-**appsettings.json 完整配置示例：**
+## 使用方式
+
+### 方式一：依赖注入（ASP.NET Core / Host）
+
+```csharp
+using LogExtension.Builder;
+using LogExtension.Extensions;
+using Microsoft.Extensions.Logging;
+
+services.AddZLogger(builder => builder
+    // 文件输出配置
+    .AddFileOutput("logs/trace/", minLevel:LogLevel.Trace, maxLevel:LogLevel.Debug)  // Trace + Debug
+    .AddFileOutput("logs/info/", LogLevel.Information)              // Info 及以上
+    .AddFileOutput("logs/error/", LogLevel.Error)                   // Error 及以上
+    .AddFileOutput("logs/debug/", LogLevel.debug, null, RollingInterval.Hour, 2048) //debug使用独立滚动配置
+    
+    // 控制台输出
+    .WithConsole()              // 带时间戳
+    // .WithConsoleDetails()    // 带时间戳和类名
+    
+    // 过滤器
+    .FilterMicrosoft()          // 过滤 Microsoft 命名空间 (Warning+)
+                    			//.FilterMicrosoft(LogLevel.Information) 
+    .FilterSystem()             // 过滤 System 命名空间 (Warning+)
+    .WithFilter("MyApp.Verbose", LogLevel.Warning)  // 自定义过滤
+    
+    // 滚动配置（全局默认）
+    .WithRollingInterval(RollingInterval.Day)  // 按天滚动
+    .WithRollingSizeKB(4096)                   // 单文件最大 4MB
+);
+```
+
+### 方式二：静态方式（控制台应用 / 无 DI 场景）
+
+```csharp
+using LogExtension;
+using LogExtension.Builder;
+using Microsoft.Extensions.Logging;
+
+// 配置
+ZLogFactory.Configure(builder => builder
+    .AddFileOutput("logs/trace/", LogLevel.Trace, LogLevel.Debug)
+    .AddFileOutput("logs/info/", LogLevel.Information)
+    .WithConsole()
+    .FilterMicrosoft()
+);
+
+// 获取 Logger
+var logger = ZLogFactory.Get<Program>();
+logger.ZLogInformation($"应用启动");
+```
+
+### 方式三：从配置文件加载
+
+```csharp
+services.AddZLogger(configuration, "ZLogger");
+
+// 配置文件 + 链式覆盖
+services.AddZLogger(configuration, builder => builder
+    .WithConsole()
+    .FilterMicrosoft(),
+    "ZLogger"
+);
+```
+
+**appsettings.json 示例：**
 
 ```json
 {
   "ZLogger": {
-    "MinimumLevel": "Information",
-    "TraceMinimumLevel": "Trace",
-    "InfoLogPath": "D:/MyApp/logs/",
-    "TraceLogPath": "D:/MyApp/logs/debug/",
-    "RollingInterval": "Day",
-    "RollingSizeKB": 10240,
+    "GlobalRollingInterval": "Day",
+    "GlobalRollingSizeKB": 4096,
+    "Outputs": [
+      {
+        "Path": "logs/trace/",
+        "MinLevel": "Trace",
+        "MaxLevel": "Debug"
+      },
+      {
+        "Path": "logs/info/",
+        "MinLevel": "Information"
+      },
+      {
+        "Path": "logs/error/",
+        "MinLevel": "Error"
+      }
+    ],
     "LogLevel": {
-      "Default": "Information",
-      "System.Net.Http.HttpClient": "Warning",
-      "Microsoft.Extensions.Http": "Warning",
-      "Microsoft.EntityFrameworkCore": "Warning"
+      "Microsoft": "Warning",
+      "System": "Warning"
     }
   }
 }
 ```
 
-**配置项说明：**
+## 文件输出配置
 
-| 配置项 | 类型 | 默认值 | 说明 |
-|-------|------|--------|------|
-| `MinimumLevel` | `string` | `Information` | Info 日志最低级别 |
-| `TraceMinimumLevel` | `string` | `Trace` | Trace 日志最低级别 |
-| `InfoLogPath` | `string` | `logs/` | Info 日志路径（可选） |
-| `TraceLogPath` | `string` | `logs/trace/` | Trace 日志路径（可选） |
-| `RollingInterval` | `string` | `Hour` | 滚动间隔：`Hour`/`Day`/`Month`/`Year`（可选） |
-| `RollingSizeKB` | `int` | `2048` | 单文件大小（KB）（可选） |
-| `LogLevel` | `object` | - | 类别过滤器 |
-
-### 方式二：代码配置（无需配置文件）
-
-#### 基础配置（仅文件日志）
+### 快捷方法
 
 ```csharp
-services.AddZLogger(config =>
-{
-    // 类别过滤器（推荐配置，屏蔽框架日志）
-    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
-    config.CategoryFilters["Microsoft.Extensions.Http"] = LogLevel.Warning;
-});
+.AddTraceOutput()           // logs/trace/ (Trace + Debug)
+.AddTraceOutput("custom/")  // 自定义路径
+
+.AddInfoOutput()            // logs/ (Info+)
+.AddInfoOutput("custom/")   // 自定义路径
+
+.AddErrorOutput()           // logs/error/ (Error+)
+.AddErrorOutput("custom/")  // 自定义路径
 ```
 
-
-
-#### 完整自定义配置
+## 滚动配置
 
 ```csharp
-services.AddZLogger(logging =>
-{
-    // 额外的日志提供程序
-    logging.AddZLoggerConsole();
-    logging.AddDebug();
-}, config =>
-{
-    // 日志级别配置（可选，有默认值）
-    config.MinimumLevel = LogLevel.Information;        // logs/ 文件夹接受的最低日志级别（默认：Information）
-    config.TraceMinimumLevel = LogLevel.Trace;         // logs/trace/ 文件夹接受的最低日志级别（默认：Trace）
-    
-    // 类别过滤器
-    config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.Warning;
-    config.CategoryFilters["Microsoft.Extensions.Http"] = LogLevel.Warning;
-    
-    // 高级配置（可选）
-    config.InfoLogPath = "D:/MyApp/logs/";             // Info 日志路径（默认：logs/）
-    config.TraceLogPath = "D:/MyApp/logs/debug/";      // Trace 日志路径（默认：logs/trace/）
-    config.RollingInterval = RollingInterval.Day;      // 滚动间隔（默认：每小时）
-    config.RollingSizeKB = 10240;                      // 单文件大小KB（默认：2048 = 2MB）
-});
+// 全局默认配置（对所有未单独配置的输出生效）
+.WithRollingInterval(RollingInterval.Day)   // Hour / Day / Month / Year
+.WithRollingSizeKB(4096)                    // 单文件最大大小 KB
+
+// 单个输出独立配置（覆盖全局）
+.AddFileOutput("logs/error/", LogLevel.Error, null, RollingInterval.Hour, 2048)
 ```
 
-### 配置说明
+**默认值：**
+- 滚动间隔：`Hour`（每小时）
+- 单文件大小：`2048` KB（2MB）
 
-| 配置项 | 默认值 | 说明 |
-|-------|--------|------|
-| `MinimumLevel` | `Information` | logs/ 文件夹记录的最低日志级别 |
-| `TraceMinimumLevel` | `Trace` | logs/trace/ 文件夹记录的最低日志级别 |
-| `CategoryFilters` | 空 | 类别过滤器，用于屏蔽特定命名空间的日志 |
-| `InfoLogPath` | `logs/` | Info 及以上日志的输出路径 |
-| `TraceLogPath` | `logs/trace/` | Trace/Debug 日志的输出路径 |
-| `RollingInterval` | `Hour` | 日志文件滚动间隔（Hour/Day/Month等） |
-| `RollingSizeKB` | `2048` | 单个日志文件最大大小（KB） |
-
-## 📝 使用方式
-
-### 🏭 方式一：依赖注入（推荐）
-
-适用于 ASP.NET Core、Worker Service 等支持依赖注入的场景：
+## 控制台配置
 
 ```csharp
-public class MyService
+.WithConsole()          // 时间戳格式：2025-01-01 12:00:00.000 [INF] 消息
+.WithConsoleDetails()   // 详细格式：2025-01-01 12:00:00.000 [INF] [MyApp.Service] 消息
+```
+
+## 过滤器配置
+
+```csharp
+// 快捷方法
+.FilterMicrosoft()                          // Microsoft 命名空间 Warning+
+.FilterMicrosoft(LogLevel.Error)            // Microsoft 命名空间 Error+
+.FilterSystem()                             // System 命名空间 Warning+
+.FilterSystem(LogLevel.Error)               // System 命名空间 Error+
+
+// 自定义过滤
+.WithFilter("MyApp.Verbose", LogLevel.Warning)
+.WithFilter("System.Net.Http", LogLevel.Error)
+
+// 批量过滤
+.WithFilters(new Dictionary<string, LogLevel>
 {
-    private readonly ILogger<MyService> _logger;
+    ["Microsoft"] = LogLevel.Warning,
+    ["System"] = LogLevel.Warning,
+    ["MyApp.Debug"] = LogLevel.Information
+})
+```
 
-    public MyService(ILogger<MyService> logger)
-    {
-        _logger = logger;
-    }
+## 日志记录
 
+```csharp
+// 注入方式
+public class MyService(ILogger<MyService> logger)
+{
     public void DoWork()
     {
-        _logger.ZLogInformation($"开始执行任务");
-        _logger.ZLogDebug($"处理数据: {100}");
-        _logger.ZLogInformation($"任务完成");
+        logger.ZLogTrace($"跟踪信息");
+        logger.ZLogDebug($"调试信息: {value}");
+        logger.ZLogInformation($"普通信息");
+        logger.ZLogWarning($"警告信息");
+        logger.ZLogError($"错误信息");
+        logger.ZLogCritical($"严重错误");
+        
+        // 带异常
+        try { ... }
+        catch (Exception ex)
+        {
+            logger.ZLogError(ex, $"操作失败: {operation}");
+        }
     }
 }
+
+// 静态方式
+var logger = ZLogFactory.Get<Program>();
+logger.ZLogInformation($"消息");
 ```
 
-### ⚙️ 方式二：工厂模式（静态使用）
+> ⚠️ **注意**：必须使用 `$""` 字符串插值语法，否则会编译报错。
 
-适用于控制台应用、类库等不使用依赖注入的场景：
+## 日志输出格式
 
-```csharp
-using LogExtension;
-
-// 获取日志记录器
-var logger = ZlogFactory.Get<Program>();
-
-//修改配置
-ZlogFactory.ConfigureDefaults(config =>
-{
-    config.MinimumLevel = LogLevel.Debug;
-    config.CategoryFilters["System"] = LogLevel.Warning;
-    config.AdditionalConfiguration = logging => logging.AddZLoggerConsoleWithTimestamp();
-});
-
-// 记录日志
-logger.ZLogInformation($"应用启动");
-logger.ZLogDebug($"调试信息: {42}");
+**控制台：**
+```
+2025-01-01 12:00:00.000 [INF] 应用启动成功
+2025-01-01 12:00:00.001 [WRN] 配置缺失
 ```
 
-## 📋 常见日志过滤配置
-
-### 推荐的框架日志过滤
-
-| 类别名称 | 说明 |
-|---------|------|
-| `System.Net.Http.HttpClient` | HttpClient 的所有日志 |
-| `System.Net.Http.HttpClient.{name}` | 指定名称的 HttpClient |
-| `Microsoft.EntityFrameworkCore` | EF Core 所有日志 |
-| `Microsoft.EntityFrameworkCore.Database.Command` | EF Core SQL 命令日志 |
-| `Microsoft.AspNetCore` | ASP.NET Core 框架日志 |
-| `Microsoft.Hosting.Lifetime` | 应用程序生命周期日志 |
-
-## 📁 日志输出说明
-
-### 默认文件结构
-
+**文件：**
 ```
-your-project/
-├── logs/                    # Info+ 级别日志
-│   └── 2025-11-26-19_001.log
-└── logs/trace/              # Trace/Debug 日志  
-    └── 2025-11-26-19_001.log
-```
-
-### 日志格式
-
-**控制台输出：**
-
-```
-2025-11-26 19:14:40.692 [INF] Application started successfully
-2025-11-26 19:14:40.693 [WRN] Configuration value is missing
-2025-11-26 19:14:40.694 [ERR] Operation failed
-```
-
-**文件输出（详细）：**
-
-```
-2025-11-26 19:14:40.692 [INF] [MyApp.Services.UserService:42] User login successful: admin
-2025-11-26 19:14:40.693 [ERR] [MyApp.Controllers.ApiController:78] Database connection failed
+2025-01-01 12:00:00.000 [INF] [MyApp.Services.UserService:42] 用户登录成功
+2025-01-01 12:00:00.001 [ERR] [MyApp.Controllers.ApiController:78] 数据库连接失败
 异常: System.InvalidOperationException: Connection timeout
-堆栈: at MyApp.Controllers.ApiController.GetData() in C:\MyApp\Controllers\ApiController.cs:line 78
+堆栈: at MyApp.Controllers.ApiController.GetData() in ApiController.cs:line 78
 ```
 
-  
+## 默认配置
 
-## ⚠️ 重要提醒
+| 配置项 | 默认值 |
+|--------|--------|
+| 输出路径 | `logs/` |
+| 日志级别 | `Trace` 及以上（全部） |
+| 滚动间隔 | 每小时 |
+| 单文件大小 | 2MB |
+| 控制台 | 关闭 |
+| 过滤器 | 无 |
 
-### 1. 字符串插值语法（必须）
+## 链式方法一览
 
-```csharp
-// ✅ 正确 - 必须使用 $"" 语法
-logger.ZLogInformation($"用户登录: {username}");
-logger.ZLogInformation($"操作完成");  // 即使无变量也要用 $""
+| 方法 | 说明 |
+|------|------|
+| `AddFileOutput(path, min, max?)` | 添加文件输出 |
+| `AddFileOutput(path, min, max, interval, size)` | 添加文件输出（带滚动配置） |
+| `AddTraceOutput(path?)` | 快捷：Trace + Debug |
+| `AddInfoOutput(path?)` | 快捷：Info 及以上 |
+| `AddErrorOutput(path?)` | 快捷：Error 及以上 |
+| `WithRollingInterval(interval)` | 全局滚动间隔 |
+| `WithRollingSizeKB(size)` | 全局单文件大小 |
+| `WithConsole()` | 启用控制台（时间戳） |
+| `WithConsoleDetails()` | 启用控制台（时间戳+类名） |
+| `WithFilter(category, level)` | 添加过滤器 |
+| `WithFilters(dict)` | 批量添加过滤器 |
+| `FilterMicrosoft(level?)` | 过滤 Microsoft 命名空间 |
+| `FilterSystem(level?)` | 过滤 System 命名空间 |
+| `FromConfiguration(config, section?)` | 从配置文件加载 |
+| `WithAdditionalConfiguration(action)` | 额外 ILoggingBuilder 配置 |
 
-// ❌ 错误 - 会编译报错 CS9205
-logger.ZLogInformation("用户登录");
-```
+## 致谢
 
-### 2. 异常记录
+本项目基于 [ZLogger](https://github.com/Cysharp/ZLogger) 构建。
 
-```csharp
-try 
-{
-    // 业务代码
-} 
-catch (Exception ex) 
-{
-    logger.ZLogError(ex, $"操作失败: {operation}");
-}
-```
+## License
 
-## 🔧 进阶配置
-
-### 控制台输出格式
-
-内置两种控制台格式：
-
-```csharp
-// 1. 简洁格式（仅时间戳 + 级别）
-logging.AddZLoggerConsoleWithTimestamp();
-// 输出：2025-11-26 19:14:40.692 [INF] 应用启动成功
-
-// 2. 详细格式（时间戳 + 级别 + 类名）  
-logging.AddZLoggerConsoleWithDetails();
-// 输出：2025-11-26 19:14:40.692 [INF] [MyApp.Services.UserService] 用户登录成功
-
-// 3. 原生格式（ZLogger 默认）
-logging.AddZLoggerConsole();
-```
-
-### 完全禁用某类别日志
-
-```csharp
-// 方式1：代码配置
-config.CategoryFilters["System.Net.Http.HttpClient"] = LogLevel.None;
-
-// 方式2：appsettings.json
-{
-  "ZLogger": {
-    "LogLevel": {
-      "System.Net.Http.HttpClient": "None"
-    }
-  }
-}
-```
-
-## 
-
-[MIT License](https://github.com/liyu473/LyuLogExtension/blob/main/LICENSE)
-
-## 🔗 相关链接
-
-- 📖 [ZLogger 官方文档](https://github.com/Cysharp/ZLogger)
+MIT
