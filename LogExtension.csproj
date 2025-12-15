@@ -21,6 +21,7 @@
 
 		<!-- 打包时自动生成 nupkg -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageOutputPath>./nupkgs</PackageOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
