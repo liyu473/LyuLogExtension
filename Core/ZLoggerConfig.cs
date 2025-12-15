@@ -54,4 +54,19 @@ internal class ZLoggerConfig
     /// 控制台是否使用全局过滤器（默认 true）
     /// </summary>
     public bool ConsoleUseGlobalFilters { get; set; } = true;
+
+    /// <summary>
+    /// 日志文件保留天数（默认：7天，0 表示不清理）
+    /// </summary>
+    public int RetentionDays { get; set; } = 7;
+
+    /// <summary>
+    /// 是否启用后台定时清理（默认：true）
+    /// </summary>
+    public bool EnableBackgroundCleanup { get; set; } = true;
+
+    /// <summary>
+    /// 后台清理间隔（默认：1小时）
+    /// </summary>
+    public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
 }

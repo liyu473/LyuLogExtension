@@ -37,6 +37,14 @@ public class ZLoggerBuilder
             factories.Add(Config.CreateConsoleFactory());
         }
 
+        // 启动日志清理服务
+        if (Config.RetentionDays > 0)
+        {
+            var cleanupService = new LogCleanupService(Config);
+            // 将清理服务附加到 CompositeLoggerFactory 以便统一释放
+            return new CompositeLoggerFactory([.. factories], cleanupService);
+        }
+
         return new CompositeLoggerFactory([.. factories]);
     }
 }
