@@ -257,6 +257,31 @@ logger.ZLogInformation($"消息");
 堆栈: at MyApp.Controllers.ApiController.GetData() in ApiController.cs:line 78
 ```
 
+## 日志清理
+
+自动清理过期日志文件，防止磁盘空间耗尽。
+
+```csharp
+services.AddZLogger(builder => builder
+    .WithRetentionDays(7)                           // 保留 7 天（默认值）
+    .WithCleanupInterval(TimeSpan.FromHours(1))     // 每小时检查一次（默认值）
+    // .DisableBackgroundCleanup()                  // 可选：禁用后台清理，仅启动时清理
+    .AddInfoOutput()
+);
+
+// 关闭自动清理
+services.AddZLogger(builder => builder
+    .WithRetentionDays(0)  // 0 表示不清理
+    .AddInfoOutput()
+);
+```
+
+**默认行为：**
+- 启动时立即清理过期日志
+- 后台每小时检查一次
+- 保留最近 7 天的日志
+- 按文件最后修改时间判断是否过期
+
 ## 默认配置
 
 | 配置项 | 默认值 |
@@ -267,6 +292,8 @@ logger.ZLogInformation($"消息");
 | 单文件大小 | 2MB |
 | 控制台 | 关闭 |
 | 过滤器 | 无 |
+| 日志保留天数 | 7 天 |
+| 后台清理间隔 | 1 小时 |
 ## 链式方法一览
 
 | 方法 | 说明 |
@@ -290,6 +317,9 @@ logger.ZLogInformation($"消息");
 | `WithConsoleFilter(category, level)` | 为控制台添加独立过滤器 |
 | `WithConsoleFilters(dict)` | 为控制台批量添加独立过滤器 |
 | `WithConsoleWithoutGlobalFilters()` | 控制台不使用全局过滤器 |
+| `WithRetentionDays(days)` | 设置日志保留天数（0 禁用清理） |
+| `WithCleanupInterval(interval)` | 设置后台清理间隔 |
+| `DisableBackgroundCleanup()` | 禁用后台清理（仅启动时清理） |
 | `FromConfiguration(config, section?)` | 从配置文件加载 |
 | `WithAdditionalConfiguration(action)` | 额外 ILoggingBuilder 配置 |
 
