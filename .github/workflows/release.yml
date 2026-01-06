@@ -35,10 +35,10 @@ jobs:
       - name: Build
         run: dotnet build -c Release --no-restore
 
-      - name: Pack LogExtension
-        run: dotnet pack LogExtension.csproj -c Release -o ./nupkgs
+      - name: Pack LyuLogExtension
+        run: dotnet pack LyuLogExtension.csproj -c Release -o ./nupkgs
 
-      - name: Push LogExtension to NuGet
+      - name: Push LyuLogExtension to NuGet
         if: ${{ !inputs.dry_run }}
         run: dotnet nuget push ./nupkgs/LyuLogExtension.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
