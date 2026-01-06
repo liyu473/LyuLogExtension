@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="883974be-6833-49ae-893a-cac1c996d645" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.LogExtension/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilder.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Cleanup.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Cleanup.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Configuration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Configuration.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Console.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Console.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.FileOutput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.FileOutput.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Filter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Filter.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.OutputFilter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.OutputFilter.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Rolling.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Builder/ZLoggerBuilderConfigExtensions.Rolling.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/CompositeLogger.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/CompositeLogger.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/CompositeLoggerFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/CompositeLoggerFactory.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/LogCleanupService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/LogCleanupService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/LogOutputConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/LogOutputConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/ZLoggerConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Core/ZLoggerConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/ZLogServiceExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ZLogServiceExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/ZLoggerLoggingBuilderExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ZLoggerLoggingBuilderExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Extensions/ZLoggerOptionsExtensions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Extensions/ZLoggerOptionsExtensions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LogExtension.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/LyuLogExtension.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LogExtension.sln" beforeDir="false" afterPath="$PROJECT_DIR$/LyuLogExtension.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ZlogFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ZlogFactory.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="37sErASIeDri8DcDsWbGJfsero3" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "main",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="883974be-6833-49ae-893a-cac1c996d645" name="更改" comment="" />
+      <created>1767683575915</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1767683575915</updated>
+      <workItem from="1767683575915" duration="173000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

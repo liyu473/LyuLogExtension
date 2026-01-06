@@ -1,8 +1,8 @@
-using LogExtension.Core;
-using LogExtension.Extensions;
+using LyuLogExtension.Core;
+using LyuLogExtension.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension.Builder;
+namespace LyuLogExtension.Builder;
 
 /// <summary>
 /// ZLogger 配置构建器

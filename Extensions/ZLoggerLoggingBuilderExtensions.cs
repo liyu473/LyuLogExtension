@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ZLogger;
 
-namespace LogExtension.Extensions;
+namespace LyuLogExtension.Extensions;
 
 /// <summary>
 /// ZLogger ILoggingBuilder 扩展方法（内部使用）

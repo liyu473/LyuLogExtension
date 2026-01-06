@@ -1,4 +1,4 @@
-namespace LogExtension.Core;
+namespace LyuLogExtension.Core;
 
 /// <summary>
 /// 日志文件清理服务

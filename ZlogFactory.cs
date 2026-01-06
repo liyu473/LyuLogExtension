@@ -1,9 +1,9 @@
-﻿using LogExtension.Core;
-using LogExtension.Extensions;
+﻿using LyuLogExtension.Extensions;
+using LyuLogExtension.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension;
+namespace LyuLogExtension;
 
 /// <summary>
 /// ZLogger 工厂类，提供全局日志工厂管理

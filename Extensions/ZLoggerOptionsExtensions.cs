@@ -1,11 +1,11 @@
-using LogExtension.Core;
+using LyuLogExtension.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Utf8StringInterpolation;
 using ZLogger;
 using ZLogger.Providers;
 
-namespace LogExtension.Extensions;
+namespace LyuLogExtension.Extensions;
 
 /// <summary>
 /// ZLogger 内部配置扩展方法

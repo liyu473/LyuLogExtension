@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ZLogger.Providers;
 
-namespace LogExtension.Core;
+namespace LyuLogExtension.Core;
 
 /// <summary>
 /// 日志输出配置（内部使用）

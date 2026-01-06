@@ -1,4 +1,4 @@
-namespace LogExtension.Builder;
+namespace LyuLogExtension.Builder;
 
 /// <summary>
 /// ZLoggerBuilder 日志清理配置扩展

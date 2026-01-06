@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension.Core;
+namespace LyuLogExtension.Core;
 
 /// <summary>
 /// 组合多个 LoggerFactory，创建的 Logger 会同时写入所有工厂

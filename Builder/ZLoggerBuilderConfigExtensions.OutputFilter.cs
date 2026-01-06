@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension.Builder;
+namespace LyuLogExtension.Builder;
 
 /// <summary>
 /// ZLoggerBuilder 输出级别过滤器配置扩展

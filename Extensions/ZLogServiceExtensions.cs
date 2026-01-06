@@ -1,9 +1,9 @@
-using LogExtension.Builder;
+using LyuLogExtension.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace LogExtension.Extensions;
+namespace LyuLogExtension.Extensions;
 
 /// <summary>
 /// ZLogger 依赖注入扩展方法

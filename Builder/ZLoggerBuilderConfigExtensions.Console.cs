@@ -1,4 +1,4 @@
-namespace LogExtension.Builder;
+namespace LyuLogExtension.Builder;
 
 /// <summary>
 /// ZLoggerBuilder 控制台配置扩展

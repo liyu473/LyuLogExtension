@@ -1,6 +1,6 @@
 using ZLogger.Providers;
 
-namespace LogExtension.Builder;
+namespace LyuLogExtension.Builder;
 
 /// <summary>
 /// ZLoggerBuilder 滚动配置扩展
