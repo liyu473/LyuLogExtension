@@ -69,4 +69,33 @@ internal class ZLoggerConfig
     /// 后台清理间隔（默认：1小时）
     /// </summary>
     public TimeSpan CleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
+    internal LogQueryConfiguration CreateQueryConfiguration()
+    {
+        var directories = Outputs.Count == 0
+            ? [Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "logs"))]
+            : Outputs
+                .Select(static x => ResolveOutputDirectory(x.Path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+        return new LogQueryConfiguration(directories);
+    }
+
+    private static string ResolveOutputDirectory(string path)
+    {
+        var trimmedPath = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (string.IsNullOrWhiteSpace(trimmedPath))
+        {
+            trimmedPath = "logs";
+        }
+
+        var directory = Path.GetDirectoryName(trimmedPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            directory = trimmedPath;
+        }
+
+        return Path.GetFullPath(directory, AppContext.BaseDirectory);
+    }
 }

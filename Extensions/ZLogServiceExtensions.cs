@@ -1,4 +1,5 @@
 using LyuLogExtension.Builder;
+using LyuLogExtension.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ public static class ZLogServiceExtensions
     /// </summary>
     public static IServiceCollection AddZLogger(this IServiceCollection services)
     {
-        return services.RegisterFactory(ZLogFactory.Factory);
+        return services.RegisterFactory(ZLogFactory.Factory, LogQueryConfiguration.CreateDefault());
     }
 
     /// <summary>
@@ -30,7 +31,7 @@ public static class ZLogServiceExtensions
 
         var factory = builder.Build();
         ZLogFactory.SetFactory(factory);
-        return services.RegisterFactory(factory);
+        return services.RegisterFactory(factory, builder.Config.CreateQueryConfiguration());
     }
 
     /// <summary>
@@ -41,7 +42,7 @@ public static class ZLogServiceExtensions
         ILoggerFactory customFactory)
     {
         ZLogFactory.SetFactory(customFactory);
-        return services.RegisterFactory(customFactory);
+        return services.RegisterFactory(customFactory, LogQueryConfiguration.CreateDefault());
     }
 
     /// <summary>
@@ -52,9 +53,10 @@ public static class ZLogServiceExtensions
         IConfiguration configuration,
         string configSectionName = "ZLogger")
     {
-        var factory = ZLogFactory.CreateFactoryFromConfiguration(configuration, configSectionName);
+        var config = configuration.ParseFromConfiguration(configSectionName);
+        var factory = ZLogFactory.CreateFactoryWithConfig(config);
         ZLogFactory.SetFactory(factory);
-        return services.RegisterFactory(factory);
+        return services.RegisterFactory(factory, config.CreateQueryConfiguration());
     }
 
     /// <summary>
@@ -72,7 +74,7 @@ public static class ZLogServiceExtensions
 
         var factory = builder.Build();
         ZLogFactory.SetFactory(factory);
-        return services.RegisterFactory(factory);
+        return services.RegisterFactory(factory, builder.Config.CreateQueryConfiguration());
     }
 
     /// <summary>
@@ -80,10 +82,12 @@ public static class ZLogServiceExtensions
     /// </summary>
     private static IServiceCollection RegisterFactory(
         this IServiceCollection services,
-        ILoggerFactory factory)
+        ILoggerFactory factory,
+        LogQueryConfiguration queryConfiguration)
     {
         services.AddSingleton(factory);
         services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+        services.AddSingleton<ILogQueryService>(_ => new LogQueryService(queryConfiguration));
         return services;
     }
 }
