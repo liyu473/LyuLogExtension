@@ -74,12 +74,50 @@ internal class ZLoggerConfig
     {
         var directories = Outputs.Count == 0
             ? [Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "logs"))]
-            : Outputs
-                .Select(static x => ResolveOutputDirectory(x.Path))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            : NormalizeDirectories(
+                [.. Outputs.Select(static x => ResolveOutputDirectory(x.Path))]
+            );
 
         return new LogQueryConfiguration(directories);
+    }
+
+    private static string[] NormalizeDirectories(IReadOnlyList<string> directories)
+    {
+        var orderedDirectories = directories
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(static x => Path.GetFullPath(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(static x => x.Length)
+            .ThenBy(static x => x, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var normalized = new List<string>(orderedDirectories.Length);
+        foreach (var directory in orderedDirectories)
+        {
+            if (normalized.Any(existing => IsSameOrChildPath(existing, directory)))
+            {
+                continue;
+            }
+
+            normalized.Add(directory);
+        }
+
+        return [.. normalized];
+    }
+
+    private static bool IsSameOrChildPath(string parentPath, string candidatePath)
+    {
+        if (string.Equals(parentPath, candidatePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var normalizedParent = parentPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        var normalizedCandidate = candidatePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+
+        return normalizedCandidate.StartsWith(normalizedParent, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveOutputDirectory(string path)

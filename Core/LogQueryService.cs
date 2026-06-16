@@ -126,7 +126,7 @@ internal sealed class LogQueryService(LogQueryConfiguration configuration) : ILo
                 continue;
             }
 
-            foreach (var filePath in Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly))
+            foreach (var filePath in Directory.EnumerateFiles(directory, "*.log", SearchOption.AllDirectories))
             {
                 if (!ShouldReadFile(filePath, options))
                 {
